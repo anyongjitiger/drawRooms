@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="./bootstrap/css/bootstrap-slider.css" rel="stylesheet">
+	<link href="./bootstrap/css/bootstrap-datepicker.min.css" rel="stylesheet" media="screen">
+	<link href="./bootstrap/css/bootstrap-treeview.css" rel="stylesheet" media="screen">
+	<style type="text/css">
+		html,body{ margin:0; padding:0;} 
+		.result {
+			position: fixed;
+			z-index: 4;
+			cursor: pointer;
+		}
+		.result a {
+			padding: 5px 15px;
+			border: 1px solid;
+			border-radius: 12px;
+			margin-right: 5px;
+			font-size: 12px;
+		}
+		@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {  
+			/* IE10+ specific styles go here */  
+
+		}
+	</style>
+</head>
+<body>
+	<div style="display: flex;align-items: center">
+		<div style="width: 200px">
+			<div id="tree"></div>
+		</div>
+		<div style="width: 1502px">
+			<canvas id="layer0" width="950" height="634" style="position: absolute; left: 479px; top:126px; z-index: 0;border: 1px solid #1111ff;"></canvas>
+		</div>
+		<div style="width: 200px;align-self:flex-end">
+			<div style="padding-left: 20px;">
+				<input type="radio" name="fruit" id="room" value="0"  checked>
+				<label for="orange">Room</label><br>
+				<input type="radio" name="fruit" id="area" value="1">
+				<label for="banana">Area</label><br>
+				<input type="radio" name="fruit" id="point" value="2">
+				<label for="apple">Point</label><br>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" 	aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+						&times;
+					</button>
+					<h4 class="modal-title" id="myModalLabel">
+						Select Room
+					</h4>
+				</div>
+				<div class="modal-body draw-modal-body">
+					Add some text
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" id="drawCloseBtn" data-dismiss="modal">close
+					</button>
+					<button type="button" class="btn btn-primary" id="drawOKBtn">
+						OK
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal fade" id="treeModal" tabindex="-1" role="dialog" aria-labelledby="treeModalLabel" 	aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+						&times;
+					</button>
+					<h4 class="modal-title" id="treeModalLabel">
+						Confirm
+					</h4>
+				</div>
+				<div class="modal-body">
+					Are you sure you want to delete it?
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" id="treeCloseBtn" data-dismiss="modal">close
+					</button>
+					<button type="button" id="treeOKBtn" class="btn btn-primary">
+						OK
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<template id="roomSelector">
+		<div class="">
+			<select class="form-control">
+				<option>Room1</option>
+				<option>Room2</option>
+				<option>Room3</option>
+				<option>Room4</option>
+				<option>Room5</option>
+			</select>
+		</div>
+	</template>
+	<template id="areaSelector">
+		<div class="">
+			<select class="form-control">
+				<option>Area1</option>
+				<option>Area2</option>
+				<option>Area3</option>
+			</select>
+		</div>
+	</template>
+	<template id="pointSelector">
+		<div class="">
+			<select class="form-control">
+				<option>Point1</option>
+				<option>Point2</option>
+				<option>Point3</option>
+				<option>Point4</option>
+				<option>Point5</option>
+			</select>
+		</div>
+	</template>
+	<script type="text/javascript" src="./js/jquery-2.1.4.min.js"></script>
+	<script type="text/javascript" src="./js/jcanvas.min.js"></script>
+	<script type="text/javascript" src="./bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="./bootstrap/js/bootstrap-slider.min.js"></script>
+	<script type="text/javascript" src="./bootstrap/js/bootstrap-datepicker.min.js" charset="UTF-8"></script>
+	<script type="text/javascript" src="./bootstrap/js/bootstrap-treeview.js" charset="UTF-8"></script>
+	<!-- <script type="text/javascript" src="./js/heatmap.min.js"></script> -->
+	<script type="text/javascript" src="./js/multiCanvas.js"></script>
+</body>
+</html>

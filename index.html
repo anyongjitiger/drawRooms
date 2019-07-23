@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="./bootstrap/css/bootstrap-slider.css" rel="stylesheet">
+	<link href="./bootstrap/css/bootstrap-datepicker.min.css" rel="stylesheet" media="screen">
+	<style type="text/css">
+		html,body{ margin:0; padding:0;} 
+		.banner{
+			height: 120px;
+			text-align: center;
+		}
+		.wrap {
+			/*width: 100%;*/
+			width: 950px;
+			height:634px;
+			margin: 0 auto;
+			overflow: auto;
+		}
+		#drawCanvas{
+			position:absolute;
+			border:0;
+			z-index: 19;
+		}
+		#heatmap{
+			background-image: url("./img/5px.png");
+			background-size: 100% 100%;
+			background-repeat: no-repeat;
+		}
+		#pop-heatmap{
+			background-image: url("./img/pp.jpg");
+			background-size: 100% 100%;
+			background-repeat: no-repeat;
+			z-index: 99;
+		}
+		.img-list {
+			display: flex;
+			justify-content:center;
+			position: relative;
+			text-align: center;
+			/*top: -200px;*/
+		}
+		.img-list img{
+			cursor: pointer;
+		}
+		.img-list > div{
+			width: 250px;
+		}
+		.rep-img-list {
+			display: flex;
+			justify-content:center;
+			position: relative;
+			text-align: center;
+			/*top: -200px;*/
+		}
+		.rep-img-list > div {
+			width:200px;
+		}
+		.sm-img {
+			margin-left: 10px;
+			width: 75%;
+		}
+		.bg-img {
+			width: 80%;
+		}
+		.btn-default {
+			border: 1px solid #B8CCF9;
+			color: #3469DD
+		}
+		.btn-default:hover {
+			border: 1px solid #B8CCF9;
+		}
+		.btn-default:active {
+			border: 1px solid #B8CCF9;
+			color: #3469DD
+		}
+		.btn-bigger{
+			padding-left: 37px;
+			padding-right: 37px;
+		}
+		.inline-btn {
+			display: inline-block;
+		}
+		.left{
+			float: left;
+			margin-left: 10px;
+		}
+		.right{
+			float: right;
+			margin-right: 10px;
+		}
+		#hover-pop{
+			position: absolute;
+			left:0;
+			top:500px;
+			z-index: 20;
+			visibility:hidden;
+		}
+		#click-pop{
+			position: absolute;
+			left:500px;
+			top:200px;
+			z-index: 21;
+			visibility:hidden;
+		}
+		#hover-pop2{
+			position: absolute;
+			left:700px;
+			top:200px;
+			z-index: 21;
+			visibility:hidden;
+		}
+		#hover-popf{
+			position: absolute;
+			left:700px;
+			top:200px;
+			z-index: 121;
+			visibility:hidden;
+		}
+		#close-icon{
+			cursor: pointer;
+			visibility:hidden;
+			float: right;
+		}
+		#popup-div{
+			position: absolute;
+			left:470px;
+			top:200px;
+			width: 1000px;
+			height: 600px;
+			z-index: 21;
+			visibility:hidden;
+			background-color: rgba(192,192,192,0.8);
+		}
+		#popup-div > div{
+			margin: auto;
+			text-align: center;
+		}
+		.slider-vertical {
+			margin-left: 1rem;
+		}
+		.right-icons{
+			position: absolute;left: 1435px;top:100px;
+		}
+		.switch-button {
+			width:80px;
+			height: 30px;
+			position: absolute;
+			top:67px;
+			right: 30px;
+			cursor: pointer;
+		}
+		#p1s-button {
+			top:33px;
+			right:27px;
+		}
+		.switch-button-1 {
+			background: url("./img/switch1.png") no-repeat;
+		}
+		.switch-button-2 {
+			background: url("./img/switch2.png") no-repeat;
+		}
+		@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {  
+		   /* IE10+ specific styles go here */  
+		   .right-icons{
+				position: absolute;left: 1555px;top:50px;
+			}
+			.ie-left{
+				margin-left: 570px; 
+			}
+			#click-pop{
+				left: 550px;
+			}
+			#popup-div{
+				left: 520px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="banner">
+		<img src="./img/top4.jpg" style="width:962px;">
+		<div style="width: 962px;margin: auto;text-align: left;">
+			<div class="dropdown inline-btn left">
+				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+					Site
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+					<li><a href="#">Aurangabad</a></li>
+				</ul>
+			</div>
+			<div class="dropdown inline-btn left">
+				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+					Building
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+					<li><a href="#">AUP_STER</a></li>
+					<li><a href="#">AUP_MICRO</a></li>
+				</ul>
+			</div>
+			<div class="btn-group inline-btn" style="margin-left: 100px;">
+				<button type="button" class="btn btn-bigger btn-primary" id="map-btn">Map</button>
+				<button type="button" class="btn btn-bigger" id="report-btn">Report</button>
+			</div>
+			<div class="inline-btn right">
+				<div class="input-append date">
+				    <input class="datepicker" size="16" type="text" value="" readonly placeholder="To">
+				    <span class="glyphicon glyphicon-th"></span>
+				</div>
+			</div>
+			<div class="inline-btn right">
+				<div class="input-append date">
+				    <input class="datepicker" size="16" type="text" value="" readonly placeholder="From">
+				    <span class="glyphicon glyphicon-th"></span>
+				</div>
+			</div>
+			<div class="dropdown inline-btn right">
+				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+					Month
+					<span class="caret"></span>
+				</button>
+				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+					<li><a href="#">Month</a></li>
+					<li><a href="#">Quarter</a></li>
+					<li><a href="#">Year</a></li>
+					<li><a href="#">Specified</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="ie-left wrap" id="map">
+		<div style="position: absolute;left: 485px;top:93px;">
+			<b>Site:</b>
+			<span>Aurangabad</span>&nbsp;&nbsp;&nbsp;&nbsp;
+			<b>Building:</b>
+			<span>AUP_STER</span>
+		</div>
+		<canvas id="drawCanvas" width="950" height="634" style="top:120px"></canvas>
+		<img id="hover-pop" src="./img/01.png">
+		<!-- <img id="click-pop" src="./img/03.png"> -->
+		<div id="click-pop">
+			<div id="p1s-button" class="switch-button switch-button-1">
+			</div>
+			<img id ="ppimg1" src="./img/03.png">
+		</div>
+
+		<img id="hover-pop2" src="./img/02.png">
+		<img id="hover-popf" src="./img/02.png">
+		<div id="popup-div">
+			<div class="btn-group inline-btn">
+				<button type="button" class="btn btn-bigger btn-primary" id="big-area-btn">Map</button>
+				<button type="button" class="btn btn-bigger" id="dashboard-btn">Dashboard</button>
+			</div>
+			<img  id="close-icon" src="./img/close.png">
+			<div id="click-pop1" style="display: none;">
+				<div id="p2s-button" class="switch-button switch-button-1">
+				</div>
+				<img id ="ppimg2" src="./img/03.png">
+			</div>
+			<div id="click-pop21" style="margin-top: 30px;">
+				<p style="text-align: center;font-size: 16px">Room 306 A</p>
+				<div style="height: 400px;width: 600px;margin: auto" id="pop-heatmap"></div>
+			</div>
+		</div>
+		<div style="height: 634px;width: 950px;margin: auto" id="heatmap"></div>
+		<div class="right-icons">
+			<label for="name">Sample Type</label>
+			<div class="checkbox">
+			    <label><input type="checkbox" value="">Surface(Contact)</label>
+			</div>
+			<div class="checkbox">
+			    <label><input type="checkbox" value="">Surface(Swabs)</label>
+			</div>
+			<div class="checkbox">
+			    <label><input type="checkbox" value="">Active Air</label>
+			</div>
+			<div class="checkbox">
+			    <label><input type="checkbox" value="">Setting/Passive Air</label>
+			</div>
+			<label for="name">Level Filter</label>
+			<div class="checkbox">
+			    <label><input type="checkbox" value="">Alert</label>
+			</div>
+			<div class="checkbox">
+			    <label><input type="checkbox" value="">Action</label>
+			</div>
+			<div class="checkbox">
+			    <label><input type="checkbox" value="">Mold</label>
+			</div>
+			<img src="./img/right.jpg"><br>
+			<input id="ex4" type="text" data-slider-min="1" data-slider-max="5" data-slider-step="0.5" data-slider-value="1" data-slider-orientation="vertical"/>
+		</div>
+	</div>
+	<div class="wrap" id="report" style="display: none">
+		<div style="height: 634px;width: 950px;">
+			<img src="./img/04.png" style="width: 100%">
+		</div>
+	</div>
+	<div class="img-list" id="mapList">
+		<div style="width:20px;margin-top:50px"><img src="./img/01_03.png"></div>
+		<div><img class="sm-img" src="./img/01_1.png"><div>Jan</div></div>
+		<div><img class="sm-img" src="./img/01_2.png"><div>Feb</div></div>
+		<div><img class="sm-img" src="./img/01_1.png"><div>Mar</div></div>
+		<div><img class="sm-img" src="./img/01_2.png"><div>Apr</div></div>
+	</div>
+	<div class="rep-img-list" id="reportList" style="display: none">
+		<div style="width:20px;margin-top:25px"><img src="./img/01_03.png"></div>
+		<div><img class="sm-img" src="./img/05.png"></div>
+		<div><img class="sm-img" src="./img/05.png"></div>
+		<div><img class="sm-img" src="./img/05.png"></div>
+		<div><img class="sm-img" src="./img/05.png"></div>
+		<div><img class="sm-img" src="./img/05.png"></div>
+		<div><img class="sm-img" src="./img/05.png"></div>
+	</div>
+	<script type="text/javascript" src="./js/jquery-2.1.4.min.js"></script>
+	<script type="text/javascript" src="./bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="./bootstrap/js/bootstrap-slider.min.js"></script>
+	<script type="text/javascript" src="./bootstrap/js/bootstrap-datepicker.min.js" charset="UTF-8"></script>
+	<script type="text/javascript" src="./js/heatmap.min.js"></script>
+	<script type="text/javascript" src="./js/demo.js"></script>
+</body>
+</html>
