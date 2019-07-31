@@ -81,10 +81,15 @@ $(function () {
 	var moveX = 0;
 	var moveY = 0;
 	var isShot = false;
+	var drawingLines = false;
+	var lineStartPoint = null;
+	var lineCurrPoint = null;
+	var AllLinePoints = [];
+	var drawingLinePoints = [];
 	var copyDomCanvas = domCanvas;
 	bindCanvasEvent();
 	function bindCanvasEvent(){
-		if(pen !== 2){
+		if(pen === 0 || pen === 1){
 			$("#layer0").unbind();
 			$("#myModal").unbind();
 			$('#layer0').mousedown(function(e) {
@@ -170,7 +175,7 @@ $(function () {
 			    }
 			    isShot = false;
 			});
-		}else{
+		}else if(pen === 2) {
 			$("#layer0").unbind();
 			$("#myModal").unbind();
 			$('#layer0').click(function(e) {
@@ -193,6 +198,124 @@ $(function () {
 					});
 				}
 			});
+		}else if(pen === 3){
+			$("#layer0").unbind();
+			$("#myModal").unbind();
+			if(!drawingLines){
+				$('#layer0').mousedown(function(e) {
+					layerNumber++;
+					layerName = 'layer' + layerNumber;
+					startX = _calculateXY(e).x;
+					startY = _calculateXY(e).y;
+					lineStartPoint = new Point(startX, startY);
+					isShot = true;
+				}).mousemove(function(e) {
+				    if(isShot) {
+				      	$('#layer0').removeLayer(layerName);
+				      	moveX = _calculateXY(e).x;
+				      	moveY = _calculateXY(e).y;
+						$('#layer0').addLayer({
+						  type: 'line',
+						  strokeStyle: penColor,
+						  strokeWidth: 2,
+						  // fillStyle: '#fff',
+						  name:layerName,
+						  x1: startX,
+						  y1: startY,
+						  x2: moveX,
+						  y2: moveY
+						});
+						$('#layer0').drawLayers();
+				    }
+				}).mouseup(function(e) {
+				    moveX = _calculateXY(e).x;
+				    moveY = _calculateXY(e).y;
+				    var width = Math.abs(moveX - startX);
+				    var height = Math.abs(moveY - startY);
+				    if(isShot && !(width === 0 && height === 0)){
+						/*$('#myModal').modal({  
+						  keyboard: false  
+						});*/
+						drawingLines = true;
+						drawingLinePoints.push(new Point(startX, startY));
+						drawingLinePoints.push(new Point(moveX, moveY));
+						requestAnimationFrame(function(){
+							bindCanvasEvent();
+						});
+						/*$("#layer0").unbind();
+						$('#layer0').click(function(e) {
+							layerNumber++;
+							layerName = 'layer' + layerNumber;
+							startX = moveX;
+							startY = moveY;
+
+							moveX = _calculateXY(e).x;
+							moveY = _calculateXY(e).y;
+							lineCurrPoint = new Point(moveX, moveY);
+							if(inCircle(15, lineStartPoint, lineCurrPoint)){
+								moveX = lineStartPoint.x;
+								moveY = lineStartPoint.y;
+								drawingLines = false;
+							}
+							$('#layer0').addLayer({
+							  type: 'line',
+							  strokeStyle: penColor,
+							  strokeWidth: 2,
+							  // fillStyle: '#fff',
+							  name:layerName,
+							  x1: startX,
+							  y1: startY,
+							  x2: moveX,
+							  y2: moveY
+							});
+							$('#layer0').drawLayers();
+
+						});*/
+				    }else{
+				    	$('#layer0').removeLayer(layerName);
+				    }
+				    isShot = false;
+				});
+			}else{
+				$('#layer0').click(function(e) {
+					layerNumber++;
+					layerName = 'layer' + layerNumber;
+					startX = moveX;
+					startY = moveY;
+					moveX = _calculateXY(e).x;
+					moveY = _calculateXY(e).y;
+					var np = new Point(moveX , moveY);
+			  		var inLines = AllLinePoints.reduce(function(r,v){
+			    		var inn = isPolygonContainsPoint(v, np);
+			    		return r || inn;
+			  		}, false);
+		    		console.log(inLines);
+					lineCurrPoint = new Point(moveX, moveY);
+					if(inCircle(10, lineStartPoint, lineCurrPoint)){
+						moveX = lineStartPoint.x;
+						moveY = lineStartPoint.y;
+						drawingLines = false;
+						drawingLinePoints.push(new Point(moveX, moveY));
+						AllLinePoints.push(drawingLinePoints);
+						drawingLinePoints = [];
+						bindCanvasEvent();
+					} else {
+						drawingLinePoints.push(new Point(moveX, moveY));
+					}
+					$('#layer0').addLayer({
+					  type: 'line',
+					  strokeStyle: penColor,
+					  strokeWidth: 2,
+					  // fillStyle: '#fff',
+					  name:layerName,
+					  x1: startX,
+					  y1: startY,
+					  x2: moveX,
+					  y2: moveY
+					});
+					$('#layer0').drawLayers();
+				});
+			}
 		}
 	}
 
@@ -273,6 +396,10 @@ $(function () {
 		return (nCross % 2 == 1);
 	}
 
+	function inCircle(radius, c, e) {
+		return (e.x-c.x)*(e.x-c.x)+(e.y-c.y)*(e.y-c.y)<=radius*radius;
+	}
+
     $("#drawOKBtn").on("click", function(e){
     	var v = $(".form-control").val();
     	var nodes = treeData[0].nodes;
@@ -307,6 +434,7 @@ $(function () {
     			end: {'x': moveX, 'y': moveY}
     		});
     		// roomPaths.push(toRectPathArray({'x': startX, 'y': startY}, {'x': moveX, 'y': moveY}));
+    		roomPaths = [];
     		getRectPath(rooms, roomPaths);
     		localStorage.setItem('roomPaths', JSON.stringify(roomPaths));
     	}else if(pen === 1){
@@ -337,6 +465,7 @@ $(function () {
     			end: {'x': moveX, 'y': moveY}
     		});
     		// areaPaths.push(toRectPathArray({'x': startX, 'y': startY}, {'x': moveX, 'y': moveY}));
+    		areaPaths = [];
     		getRectPath(areas, areaPaths);
     		localStorage.setItem('areaPaths', JSON.stringify(areaPaths));
     	}else{

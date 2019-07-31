@@ -35,7 +35,18 @@ var houses = [house1, house2, house3];
 let roomPaths = JSON.parse(localStorage.getItem('roomPaths'));
 let areaPaths = JSON.parse(localStorage.getItem('areaPaths'));
 let pointPaths = JSON.parse(localStorage.getItem('pointPaths'));
-houses = roomPaths;
+// houses = roomPaths; //临时注掉
+var allPoints = [];
+for(var i = 0;i < houses.length; i++){
+  var house = houses[i];
+  var points = [];
+  for(var j = 0; j < house.length; j++){
+    var point = new Point(house[j][0], house[j][1]);
+    points.push(point);
+  }
+  allPoints.push(points);
+}
+console.log(allPoints);
 //因为data是一组数据,web切图报价所以直接setData
  //heatmapInstance.setData(data); //数据绑定还可以使用
 var initData = 
@@ -141,6 +152,32 @@ function draw(ctx, scale, color, house, scrollTop, scrollLeft, lineWidth){
 		ctx.closePath();
 		ctx.stroke();
 	}
+}
+
+
+function Point(x, y) {
+    this.x = x;
+    this.y = y;
+}
+
+function isPolygonContainsPoint(mPoints, point) {
+  var nCross = 0;
+  for (var i = 0, mPointsCount = mPoints.length; i < mPointsCount; i++) {
+    var p1 = mPoints[i];
+    var p2 = mPoints[(i + 1) % mPointsCount];
+    // p1p2是水平线段,要么没有交点,要么有无限个交点
+    if (p1.y == p2.y) continue;
+    // point 在p1p2 底部 --> 无交点
+    if (point.y < Math.min(p1.y, p2.y)) continue;
+    // point 在p1p2 顶部 --> 无交点
+    if (point.y >= Math.max(p1.y, p2.y)) continue;
+    // 求解 point点水平线与当前p1p2边的交点的 X 坐标 通过前面几个if条件筛选,这里的如果求出来有交点一定在p1p2连接线上,而不是延长线上.
+      var x = (point.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+        if (x > point.x) {// 当x=point.x时,说明point在p1p2线段上
+          nCross++; // 只统计单边交点
+      }
+  }
+  return (nCross % 2 == 1);
 }
 
  //构建一些随机数据点,网页切图价格这里替换成你的业务数据
@@ -305,6 +342,11 @@ closeIcon.addEventListener("click", function(e){
 });
 
 drawCanvas.addEventListener('click',function(e){
+  var np = new Point(e.pageX-drawLeft , e.pageY-drawTop);
+  allPoints.forEach(function(v, i, arr){
+    var inn = isPolygonContainsPoint(v, np);
+    console.log(inn);
+  });
   if(innerPath){
     if(_inRect){
       //点击弹出窗口
