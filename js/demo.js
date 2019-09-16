@@ -35,7 +35,7 @@ var houses = [house1, house2, house3];
 let roomPaths = JSON.parse(localStorage.getItem('roomPaths'));
 let areaPaths = JSON.parse(localStorage.getItem('areaPaths'));
 let pointPaths = JSON.parse(localStorage.getItem('pointPaths'));
-// houses = roomPaths; //临时注掉
+houses = roomPaths; //临时注掉
 var allPoints = [];
 for(var i = 0;i < houses.length; i++){
   var house = houses[i];
@@ -46,7 +46,7 @@ for(var i = 0;i < houses.length; i++){
   }
   allPoints.push(points);
 }
-console.log(allPoints);
+
 //因为data是一组数据,web切图报价所以直接setData
  //heatmapInstance.setData(data); //数据绑定还可以使用
 var initData = 

@@ -297,6 +297,11 @@ $(function () {
 						drawingLines = false;
 						drawingLinePoints.push(new Point(moveX, moveY));
 						AllLinePoints.push(drawingLinePoints);
+						console.log(AllLinePoints);
+						if(AllLinePoints.length >1 ){
+							var jc = isPolygonsIntersectant(AllLinePoints[0], AllLinePoints[1]);
+							console.log(jc);
+						}
 						drawingLinePoints = [];
 						bindCanvasEvent();
 					} else {
@@ -338,11 +343,12 @@ $(function () {
 		localStorage.setItem('roomPaths', JSON.stringify(roomPaths));
 		getRectPath(areas, areaPaths);
 		localStorage.setItem('areaPaths', JSON.stringify(areaPaths));
-		getPointPath(points, pointPaths)
+		getPointPath(points, pointPaths);
 		localStorage.setItem('pointPaths', JSON.stringify(pointPaths));
 	}
 
 	function getPointPath(points, paths){
+		paths.length = 0;
 		points.forEach(function(item, index){
 			paths.push({ x: item.start.x, y: item.start.y, radius:20,value: 100});
 		});
@@ -394,6 +400,32 @@ $(function () {
     		}
 		}
 		return (nCross % 2 == 1);
+	}
+
+	//判断两多边形线段是否相交
+	function isSegmentsIntersectant(segA, segB) {//线线
+	    const abc = (segA[0].x - segB[0].x) * (segA[1].y - segB[0].y) - (segA[0].y - segB[0].y) * (segA[1].x - segB[0].x);
+	    const abd = (segA[0].x - segB[1].x) * (segA[1].y - segB[1].y) - (segA[0].y - segB[1].y) * (segA[1].x - segB[1].x);
+	    if (abc * abd >= 0) {
+	        return false;
+	    }
+	    const cda = (segB[0].x - segA[0].x) * (segB[1].y - segA[0].y) - (segB[0].y - segA[0].y) * (segB[1].x - segA[0].x);
+	    const cdb = cda + abc - abd;
+	    return !(cda * cdb >= 0);
+	}
+
+	//判断两多边形边界是否相交
+	function isPolygonsIntersectant(plyA, plyB) {//面面
+	    for (let i = 0, il = plyA.length; i < il; i++) {
+	        for (let j = 0, jl = plyB.length; j < jl; j++) {
+	            const segA = [plyA[i], plyA[i === il - 1 ? 0 : i + 1]];
+	            const segB = [plyB[j], plyB[j === jl - 1 ? 0 : j + 1]];
+	            if (isSegmentsIntersectant(segA, segB)) {
+	                return true;
+	            }
+	        }
+	    }
+	    return false;
 	}
 
 	function inCircle(radius, c, e) {
@@ -501,8 +533,8 @@ $(function () {
     			end: {'x': moveX, 'y': moveY}
     		});
     		// pointPaths.push({ x: startX, y: startY, radius:20,value: 100});
-    		getPointPath(points, pointPaths)
-    		localStorage.setItem('pointPaths', JSON.stringify(pointPaths));
+    		getPointPath(points, pointPaths);
+			localStorage.setItem('pointPaths', JSON.stringify(pointPaths));
     	}
     	var newIDs = [newRoomID, newAreaID, newPointID];
     	var parentID;
