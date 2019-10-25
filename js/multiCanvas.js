@@ -1,18 +1,22 @@
 $(function () {
-	localStorage.clear();
 	var pen = 0;
-	var penColors = ['red', 'blue', 'orange'];
+	var penColors = ['red', 'blue', 'green', 'orange'];
 	var penColor = penColors[pen];
+	getRoomOptions();
 	var roomTemplate = $("#roomSelector").html();
 	var areaTemplate = $("#areaSelector").html();
 	var pointTemplate = $("#pointSelector").html();
 	var modalTitles = ['Select Room','Select Area','Select Point' ];
-	var templates = [roomTemplate, areaTemplate, pointTemplate];
+	var templates = [roomTemplate, areaTemplate, pointTemplate, roomTemplate];
 	var modalInnerHtml = templates[pen];
 	var modalTitle = modalTitles[pen];
 	var roomCount = 0, areaCount = 0, pointCount = 0;
 	$(".draw-modal-body").html(modalInnerHtml);
     $("input[type='radio']").on("click",function(){
+    	$("input[type='radio']").prop("checked",false);
+    	let radioName = $(this).attr("name");
+    	// $(this).attr("checked",true);
+    	$(`input[name='${radioName}']`).prop("checked",true);
 		pen = parseInt($(this).val());
 		penColor = penColors[pen];
 		modalInnerHtml = templates[pen];
@@ -21,16 +25,44 @@ $(function () {
 		$("#myModalLabel").text(modalTitle);
 		bindCanvasEvent();
 	});
+	const MAPS = [{'floor_id': '110-HM1-1043', 'url': '110-HM1-1043.png', 'width': 1100, 'height': 800},
+	{'floor_id': '110-HM1-1044', 'url': '110-HM1-1044.png', 'width': 1100, 'height': 800},
+	{'floor_id': '110-HM1-1053', 'url': '110-HM1-1053.png', 'width': 1100, 'height': 800}, 
+	{'floor_id': '110-HM1-1054', 'url': '110-HM1-1054.png', 'width': 1100, 'height': 800}, 
+	{'floor_id': '110-HM1-3046', 'url': '110-HM1-3046.png', 'width': 1100, 'height': 800},
+	{'floor_id': '110-HM1-3047', 'url': '110-HM1-3047.png', 'width': 1100, 'height': 800},
+	{'floor_id': '110-HM1-3048', 'url': '110-HM1-3048.png', 'width': 1100, 'height': 800},
+	{'floor_id': '110-HM1-3051', 'url': '110-HM1-3051.png', 'width': 1100, 'height': 800},
+	{'floor_id': '110-HM1-3057', 'url': '110-HM1-3057.png', 'width': 1100, 'height': 800}
+	];
+	var curMap = '110-HM1-1043.png';
+	for(var i = 0; i < MAPS.length; i++) {
+		//添加option元素
+		$("#mapSelect").append("<option value='" + MAPS[i].url + "'>" + MAPS[i].floor_id + "</option>");
+	}
+	curMap = $("#mapSelect").val();
+	getSelectedMapData('110-HM1-1043');
+    $("#mapSelect").change(function (data) {
+    	if(!(AllLinePoints.length === 0 && roomPaths.length ===0)){
+    		$("#mapSelect").val(curMap);
+    		alert('Please save first!');
+    		return;
+    	}
+    	curMap = $("#mapSelect").val();
+    	var text = $("#mapSelect").find("option:selected").text();
+    	getSelectedMapData(text);
+        clear();
+    });
 
 
     // var domCanvas = document.getElementById('layer0');
     var domCanvas = $('#layer0')[0];
     $('#layer0').addLayer({
 	  type: 'image',
-	  source: 'img/5px.png',
-	  width:950,
+	  source: 'img/110-HM1-1043.png',
+	  width:872,
 	  height:634,
-	  x: 480, y: 310
+	  x: 436, y: 317
 	});
 	$('#layer0').drawLayers();
 	// var domContext = domCanvas.getContext('2d');
@@ -38,7 +70,7 @@ $(function () {
 
 	// var balls = [];
     var rooms= [], areas = [], points = [];
-    var roomPaths= [], areaPaths = [], pointPaths = [];
+    var roomPaths= [], areaPaths = [], pointPaths = [], linePaths = [];
 
     /**
      * 事件交互, 点击事件为例
@@ -68,12 +100,7 @@ $(function () {
  //        }*/
 
  //    });
-	function _calculateXY(e){
-		return {
-          x: e.clientX - domCanvas.getBoundingClientRect().left,
-          y: e.clientY - domCanvas.getBoundingClientRect().top
-        }
-	}
+	
 	var layerNumber = 0;
 	var layerName = 'layer' + layerNumber;
 	var startX = 0;
@@ -95,27 +122,15 @@ $(function () {
 			$('#layer0').mousedown(function(e) {
 				layerNumber++;
 				layerName = 'layer' + layerNumber;
-				startX = _calculateXY(e).x;
-				startY = _calculateXY(e).y;
+				startX = _calculateXY(e, domCanvas).x;
+				startY = _calculateXY(e, domCanvas).y;
 				var _in = inRect2(startX, startY, rooms); //临时加2
 				isShot = pen === 0 ? (!_in) : _in;
-				/*$('#layer0').addLayer({
-					type: 'rectangle',
-					strokeStyle: 'red',
-					strokeWidth: 2,
-					fillStyle: '#333333',
-					name:layerName,
-					fromCenter: false,
-					x: startX,
-					y: startY,
-					width: 1,
-					height: 1
-				});*/
 			}).mousemove(function(e) {
 			    if(isShot) {
 			      $('#layer0').removeLayer(layerName);
-			      moveX = _calculateXY(e).x;
-			      moveY = _calculateXY(e).y;
+			      moveX = _calculateXY(e, domCanvas).x;
+			      moveY = _calculateXY(e, domCanvas).y;
 			      var width = moveX - startX;
 			      var height = moveY - startY;
 			      /*if(width === 0){
@@ -157,8 +172,9 @@ $(function () {
 			      }
 			    }
 			}).mouseup(function(e) {
-			    moveX = _calculateXY(e).x;
-			    moveY = _calculateXY(e).y;
+				getRoomOptions();
+			    moveX = _calculateXY(e, domCanvas).x;
+			    moveY = _calculateXY(e, domCanvas).y;
 			    var width = Math.abs(moveX - startX);
 			    var height = Math.abs(moveY - startY);
 			    if(isShot && width!==0){
@@ -179,10 +195,13 @@ $(function () {
 			$("#layer0").unbind();
 			$("#myModal").unbind();
 			$('#layer0').click(function(e) {
-				startX = _calculateXY(e).x;
-				startY = _calculateXY(e).y;
-				var _inAreas = inRect2(startX, startY, areas);
-				if(_inAreas){
+				startX = _calculateXY(e, domCanvas).x;
+				startY = _calculateXY(e, domCanvas).y;
+				if(pointInRooms(startX, startY)){
+					var thisRoom = getParent(startX, startY, rooms);
+					var thisLines = getLinesParent(startX, startY, AllLinePoints);
+					var text = (thisRoom !== undefined) ? thisRoom['text'] : thisLines["name"];
+					getPointOptions(text);
 					$('#layer0').addLayer({
 			          type: 'arc',
 					  fillStyle: '#69f',
@@ -201,21 +220,23 @@ $(function () {
 		}else if(pen === 3){
 			$("#layer0").unbind();
 			$("#myModal").unbind();
+			const groupsLength = AllLinePoints.length;
 			if(!drawingLines){
 				$('#layer0').mousedown(function(e) {
 					layerNumber++;
 					layerName = 'layer' + layerNumber;
-					startX = _calculateXY(e).x;
-					startY = _calculateXY(e).y;
+					startX = _calculateXY(e, domCanvas).x;
+					startY = _calculateXY(e, domCanvas).y;
 					lineStartPoint = new Point(startX, startY);
 					isShot = true;
 				}).mousemove(function(e) {
 				    if(isShot) {
 				      	$('#layer0').removeLayer(layerName);
-				      	moveX = _calculateXY(e).x;
-				      	moveY = _calculateXY(e).y;
+				      	moveX = _calculateXY(e, domCanvas).x;
+				      	moveY = _calculateXY(e, domCanvas).y;
 						$('#layer0').addLayer({
 						  type: 'line',
+						  groups: ['lineGroup'+ groupsLength],
 						  strokeStyle: penColor,
 						  strokeWidth: 2,
 						  // fillStyle: '#fff',
@@ -228,8 +249,8 @@ $(function () {
 						$('#layer0').drawLayers();
 				    }
 				}).mouseup(function(e) {
-				    moveX = _calculateXY(e).x;
-				    moveY = _calculateXY(e).y;
+				    moveX = _calculateXY(e, domCanvas).x;
+				    moveY = _calculateXY(e, domCanvas).y;
 				    var width = Math.abs(moveX - startX);
 				    var height = Math.abs(moveY - startY);
 				    if(isShot && !(width === 0 && height === 0)){
@@ -280,35 +301,41 @@ $(function () {
 				$('#layer0').click(function(e) {
 					layerNumber++;
 					layerName = 'layer' + layerNumber;
-					startX = moveX;
+					let _moveX = moveX, _moveY = moveY;
+					_moveX = _calculateXY(e, domCanvas).x;
+					_moveY = _calculateXY(e, domCanvas).y;
+			  		if(pointInRooms(_moveX, _moveY)){
+			  			return;
+			  		}
+			  		startX = moveX;
 					startY = moveY;
-					moveX = _calculateXY(e).x;
-					moveY = _calculateXY(e).y;
-					var np = new Point(moveX , moveY);
-			  		var inLines = AllLinePoints.reduce(function(r,v){
-			    		var inn = isPolygonContainsPoint(v, np);
-			    		return r || inn;
-			  		}, false);
-		    		console.log(inLines);
+					moveX = _moveX;
+					moveY = _moveY;
+
 					lineCurrPoint = new Point(moveX, moveY);
 					if(inCircle(10, lineStartPoint, lineCurrPoint)){
 						moveX = lineStartPoint.x;
 						moveY = lineStartPoint.y;
 						drawingLines = false;
 						drawingLinePoints.push(new Point(moveX, moveY));
-						AllLinePoints.push(drawingLinePoints);
-						console.log(AllLinePoints);
-						if(AllLinePoints.length >1 ){
-							var jc = isPolygonsIntersectant(AllLinePoints[0], AllLinePoints[1]);
-							console.log(jc);
+						AllLinePoints.push({'path': drawingLinePoints});
+						if(AllLinePoints.length >1 ){ //这里是判断两个多边形的边界是否相交
+							var jc = isPolygonsIntersectant(AllLinePoints[0].path, AllLinePoints[1].path);
+							// console.log(jc);
 						}
+						getRoomOptions();
+						$('#myModal').modal({  
+						  keyboard: false  
+						});
 						drawingLinePoints = [];
 						bindCanvasEvent();
 					} else {
 						drawingLinePoints.push(new Point(moveX, moveY));
 					}
+					const lastLayerGroup = $('#layer0').getLayer(-1).groups[0];
 					$('#layer0').addLayer({
 					  type: 'line',
+					  groups: [lastLayerGroup],
 					  strokeStyle: penColor,
 					  strokeWidth: 2,
 					  // fillStyle: '#fff',
@@ -324,116 +351,34 @@ $(function () {
 		}
 	}
 
-	function toRectPathArray(start, end){
-		return [[start.x, start.y], [end.x, start.y], [end.x, end.y], [start.x, end.y], [start.x, start.y]];
-	}
-
-	function getRectPath(rects, paths){
-		rects.forEach(function(item, index){
-			paths.push(toRectPathArray({'x': item.start.x, 'y': item.start.y}, {'x': item.end.x, 'y': item.end.y}));
-		});
+	function pointInRooms(x, y) {
+		var _inAreas = inRect2(x, y, rooms);
+		var np = new Point(x , y);
+		var _inLines = AllLinePoints.reduce(function(r,v){
+    		var inn = isPolygonContainsPoint(v.path, np);
+    		return r || inn;
+  		}, false);
+  		return _inAreas || _inLines;
 	}
 
 	function refreshLocalStorage(){
-		localStorage.clear();
-		roomPaths = [];
-		areaPaths = [];
+		// roomPaths = [];
+		// areaPaths = [];
 		pointPaths = [];
-        getRectPath(rooms, roomPaths);
-		localStorage.setItem('roomPaths', JSON.stringify(roomPaths));
-		getRectPath(areas, areaPaths);
-		localStorage.setItem('areaPaths', JSON.stringify(areaPaths));
+		linePaths = [];
+        // getRectPath(rooms, roomPaths);
+		// getRectPath(areas, areaPaths);
 		getPointPath(points, pointPaths);
-		localStorage.setItem('pointPaths', JSON.stringify(pointPaths));
-	}
-
-	function getPointPath(points, paths){
-		paths.length = 0;
-		points.forEach(function(item, index){
-			paths.push({ x: item.start.x, y: item.start.y, radius:20,value: 100});
+		AllLinePoints.forEach((v, i) => {
+			linePaths[i] = v.path.reduce((s, val) => {
+				s.push([val.x, val.y]);
+				return s;
+			}, []);
 		});
-	}
-
-    function inRect(x, y, rooms){
-    	var _inAnyRoom = rooms.some(function(room){
-			return room[0].x < x && room[0].y < y && room[1].x > x && room[1].y > y;
-		});
-		return _inAnyRoom;
-    }
-    function inRect2(x, y, rooms){
-    	var _inAnyRoom = rooms.some(function(room){
-			return room.start.x < x && room.start.y < y && room.end.x > x && room.end.y > y;
-		});
-		return _inAnyRoom;
-    }
-
-    function getParent(x, y, rooms){
-    	var _room;
-    	rooms.forEach(function(room){
-			if(room.start.x < x && room.start.y < y && room.end.x > x && room.end.y > y){
-				_room =  room;
-			}
-		});
-		return _room;
-    }
-
-    function Point(x, y) {
-	  this.x = x;
-	  this.y = y;
-	}
-
-	function isPolygonContainsPoint(mPoints, point) {
-		var nCross = 0;
-		for (var i = 0, mPointsCount = mPoints.length; i < mPointsCount; i++) {
-			var p1 = mPoints[i];
-			var p2 = mPoints[(i + 1) % mPointsCount];
-			// p1p2是水平线段,要么没有交点,要么有无限个交点
-			if (p1.y == p2.y) continue;
-			// point 在p1p2 底部 --> 无交点
-			if (point.y < Math.min(p1.y, p2.y)) continue;
-			// point 在p1p2 顶部 --> 无交点
-			if (point.y >= Math.max(p1.y, p2.y)) continue;
-			// 求解 point点水平线与当前p1p2边的交点的 X 坐标 通过前面几个if条件筛选,这里的如果求出来有交点一定在p1p2连接线上,而不是延长线上.
-  			var x = (point.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
-      		if (x > point.x) {// 当x=point.x时,说明point在p1p2线段上
-        		nCross++; // 只统计单边交点
-    		}
-		}
-		return (nCross % 2 == 1);
-	}
-
-	//判断两多边形线段是否相交
-	function isSegmentsIntersectant(segA, segB) {//线线
-	    const abc = (segA[0].x - segB[0].x) * (segA[1].y - segB[0].y) - (segA[0].y - segB[0].y) * (segA[1].x - segB[0].x);
-	    const abd = (segA[0].x - segB[1].x) * (segA[1].y - segB[1].y) - (segA[0].y - segB[1].y) * (segA[1].x - segB[1].x);
-	    if (abc * abd >= 0) {
-	        return false;
-	    }
-	    const cda = (segB[0].x - segA[0].x) * (segB[1].y - segA[0].y) - (segB[0].y - segA[0].y) * (segB[1].x - segA[0].x);
-	    const cdb = cda + abc - abd;
-	    return !(cda * cdb >= 0);
-	}
-
-	//判断两多边形边界是否相交
-	function isPolygonsIntersectant(plyA, plyB) {//面面
-	    for (let i = 0, il = plyA.length; i < il; i++) {
-	        for (let j = 0, jl = plyB.length; j < jl; j++) {
-	            const segA = [plyA[i], plyA[i === il - 1 ? 0 : i + 1]];
-	            const segB = [plyB[j], plyB[j === jl - 1 ? 0 : j + 1]];
-	            if (isSegmentsIntersectant(segA, segB)) {
-	                return true;
-	            }
-	        }
-	    }
-	    return false;
-	}
-
-	function inCircle(radius, c, e) {
-		return (e.x-c.x)*(e.x-c.x)+(e.y-c.y)*(e.y-c.y)<=radius*radius;
 	}
 
     $("#drawOKBtn").on("click", function(e){
-    	var v = $(".form-control").val();
+    	var v = $(".pop-select").val();
     	var nodes = treeData[0].nodes;
     	var newRoomID, newAreaID, newPointID;
     	var textX, textY;
@@ -446,9 +391,9 @@ $(function () {
     		textX = moveX-25;
     		textY = startY+10;
     	}
-    	if(pen === 0){
+    	if(pen === 0 || pen === 3){
     		roomCount++;
-    		var lastRoomID = nodes.length === 0 ? '10' : nodes[nodes.length-1].id;
+    		var lastRoomID = nodes.length === 0 ? '10' : _.orderBy(nodes, ['id'], ['desc'])[0].id;
     		newRoomID = (parseInt(lastRoomID)+1).toString();
     		var newRoomNode = {
     			id: newRoomID,
@@ -459,16 +404,30 @@ $(function () {
     		nodes.push(newRoomNode);
     		$("#tree").treeview("addNode", [0, { node: newRoomNode }]);
     		// rooms.push([{'x': startX, 'y': startY},{'x': moveX, 'y': moveY}]); //原版
-    		rooms.push({
-    			id: newRoomID,
-    			text: v,
-    			start: {'x': startX, 'y': startY},
-    			end: {'x': moveX, 'y': moveY}
-    		});
-    		// roomPaths.push(toRectPathArray({'x': startX, 'y': startY}, {'x': moveX, 'y': moveY}));
-    		roomPaths = [];
-    		getRectPath(rooms, roomPaths);
-    		localStorage.setItem('roomPaths', JSON.stringify(roomPaths));
+    		
+    		if(pen === 3){
+    			AllLinePoints[AllLinePoints.length -1].id = newRoomID;
+    			AllLinePoints[AllLinePoints.length -1].name = v;
+    			if(!AllLinePoints[AllLinePoints.length -1].hasOwnProperty('points')){
+					AllLinePoints[AllLinePoints.length -1].points = [];
+    			}
+				AllLinePoints.forEach((v, i) => {
+					linePaths[i] = v.path.reduce((s, val) => {
+						s.push([val.x, val.y]);
+						return s;
+					}, []);
+				});
+    		}else{
+    			rooms.push({
+	    			id: newRoomID,
+	    			text: v,
+	    			start: {'x': startX, 'y': startY},
+	    			end: {'x': moveX, 'y': moveY}
+	    		});
+	    		// roomPaths.push(toRectPathArray({'x': startX, 'y': startY}, {'x': moveX, 'y': moveY}));
+	    		roomPaths = [];
+    			getRectPath(rooms, roomPaths);
+    		}
     	}else if(pen === 1){
     		room = getParent(startX, startY, rooms);
     		roomID = room.id;
@@ -499,9 +458,8 @@ $(function () {
     		// areaPaths.push(toRectPathArray({'x': startX, 'y': startY}, {'x': moveX, 'y': moveY}));
     		areaPaths = [];
     		getRectPath(areas, areaPaths);
-    		localStorage.setItem('areaPaths', JSON.stringify(areaPaths));
-    	}else{
-    		area = getParent(startX, startY, areas);
+    	}else if(pen === 2){
+    		/*area = getParent(startX, startY, areas);
     		areaID = area.id;
     		roomID = area.roomID;
     		var roomNode = nodes.filter(function(node){
@@ -510,23 +468,36 @@ $(function () {
 			var areaNode = roomNode.nodes.filter(function(node){
     			return node.id === areaID;
     		})[0];
-    		var lastPointID = (areaNode.nodes === undefined || areaNode.nodes.length === 0) ? (areaID + '0') : areaNode.nodes[areaNode.nodes.length-1].id;
+    		var lastPointID = (areaNode.nodes === undefined || areaNode.nodes.length === 0) ? (areaID + '0') : areaNode.nodes[areaNode.nodes.length-1].id;*/
+    		let pointIn;
+    		let _roomOfPoint = getParent(startX, startY, rooms),_LinesOfPoint = getLinesParent(startX, startY, AllLinePoints);
+    		if(_roomOfPoint){
+    			room = _roomOfPoint;
+    			pointIn = 'room';
+    		}else{
+    			room = _LinesOfPoint;
+    			pointIn = 'line';
+    		}
+    		roomID = room.id;
+    		var roomNode = nodes.find(function(node){
+    			return node.id === roomID;
+    		});
+    		var lastPointID = (roomNode.nodes === undefined || roomNode.nodes.length === 0) ? (roomID + '0') : roomNode.nodes[roomNode.nodes.length-1].id;
     		newPointID = (parseInt(lastPointID)+1).toString();
-
 			var newPointNode = {
     			id: newPointID,
     			text: v,
     			start: {'x': startX, 'y': startY},
     			end: {'x': moveX, 'y': moveY}
     		}
-    		if(areaNode.nodes === undefined){
-    			areaNode.nodes = [];
+    		if(roomNode.nodes === undefined){
+    			roomNode.nodes = [];
     		}
-			$("#tree").treeview("addNode", [areaNode.nodeId, { node: newPointNode }]);
+			$("#tree").treeview("addNode", [roomNode.nodeId, { node: newPointNode }]);
     		// points.push({'x': startX, 'y': startY});
     		points.push({
     			roomID: roomID,
-    			areaID: areaID,
+    			// areaID: areaID,
     			id: newPointID,
     			text: v,
     			start: {'x': startX, 'y': startY},
@@ -534,9 +505,19 @@ $(function () {
     		});
     		// pointPaths.push({ x: startX, y: startY, radius:20,value: 100});
     		getPointPath(points, pointPaths);
-			localStorage.setItem('pointPaths', JSON.stringify(pointPaths));
+    		if(pointIn === 'room'){
+    			const room = roomPaths.find((v)=>{
+    				return v.id === roomID
+    			});
+    			room.points.push({'id': newPointID, 'text': v, 'position': new Point(startX, startY)});
+    		}else{
+    			const room = AllLinePoints.find((v)=>{
+    				return v.id === roomID
+    			});
+    			room.points.push({'id': newPointID, 'text': v, 'position': new Point(startX, startY)});
+    		}
     	}
-    	var newIDs = [newRoomID, newAreaID, newPointID];
+    	var newIDs = [newRoomID, newAreaID, newPointID, newRoomID];
     	var parentID;
     	$('#layer0').addLayer({
 		  type: 'text',
@@ -557,9 +538,16 @@ $(function () {
 		$('#myModal').modal('hide');
     });
 
-    $("#drawCloseBtn").on('click', function(){
+    $("#drawCloseBtn").on('click', function(){ 
+    	// 这里没有删除localstorage
     	var layers = $('#layer0').getLayers();
-    	$('#layer0').removeLayer(layers.length - 1);
+    	if(pen !== 3){
+    		$('#layer0').removeLayer(layers.length - 1);
+    	}else{
+    		AllLinePoints.pop();
+    		const groupName = layers[layers.length-2].groups[0];
+    		$('#layer0').removeLayerGroup(groupName);
+    	}
     	$('#layer0').drawLayers();
     	$('#myModal').modal('hide');
     });
@@ -577,34 +565,13 @@ $(function () {
 		var ctx = canvas.getContext('2d');
 		return ctx;
     }*/
-    function getTree() {
-        var data = [
-            {
-                text: "p1",
-                id: '1',
-                nodes: [
-                    { text: "room1", id: '11' },
-                    { text: "room2", id: '12' },
-                    { text: "room3", id: '13' },
-                    {
-                        text: "room4",
-                        id: '14',
-                        nodes: [
-                            {
-                                text: 'area1',
-                                id: '141'
-                            }
-                        ]
-                    }
-                ]
-            }
-        ];
-        return data;
-    }
 
     var treeData = [{
     	text: "rooms",
         id: '1',
+        state: {
+		    expanded: true
+		},
         nodes: [
             /*{
                 text: "room1",
@@ -622,49 +589,52 @@ $(function () {
     	return treeData;
     }
     var currentLayerData;
-	$("#tree").treeview({
-        // data: getTree(),
-        data: getTreeData(),
-        showIcon: false,
-        showCheckbox: false,
-        onhoverColor: "#E8E8E8",
-        showBorder: false,
-        showTags: true,
-        highlightSelected: true,
-        highlightSearchResults: false,
-        selectedBackColor: "#8D9CAA",
-        levels: 2,
-        onNodeSelected: function(event, data) {
-            if (data.nodeId === undefined || data.nodeId === null) {
-                return;
-            }
-            currentLayerData = data;
-            $('#treeModal').modal({  
-			  keyboard: false  
-			});
-            // $("#tree").treeview("deleteNode", [data.nodeId, { silent: true }]);
-            //nodeData是checkedNode或者selectedNode，选中或者checked这个节点， 该节点如果有父节点的话就会被删除。
-        },
-        onNodeExpanded:
-            function(event, data) {
-                /*$.ajax({
-                    type: "Post",
-                    url: "/Bootstrap/GetExpandJson?id=" + data.id,
-                    dataType: "json",
-                    success: function (result) {
-                        for (var index = 0; index < result.length; index++) {
-                            var item = result[index];
-                            $("#tree1")
-                                .treeview("addNode",
-                                [
-                                    data.nodeId,
-                                    { node: { text: item.text, id: item.id }, silent: true }
-                                ]);
-                        }
-                    }
-                });*/
-            }
-    });
+    function initTree() {
+    	$("#tree").treeview({
+	        data: getTreeData(),
+	        showIcon: false,
+	        showCheckbox: false,
+	        onhoverColor: "#E8E8E8",
+	        showBorder: false,
+	        showTags: true,
+	        highlightSelected: true,
+	        highlightSearchResults: false,
+	        selectedBackColor: "#8D9CAA",
+	        levels: 2,
+	        onNodeSelected: function(event, data) {
+	            if (data.nodeId === undefined || data.nodeId === null) {
+	                return;
+	            }
+	            currentLayerData = data;
+	            $('#treeModal').modal({  
+				  keyboard: false  
+				});
+	            // $("#tree").treeview("deleteNode", [data.nodeId, { silent: true }]);
+	            //nodeData是checkedNode或者selectedNode，选中或者checked这个节点， 该节点如果有父节点的话就会被删除。
+	        },
+	        onNodeExpanded:
+	            function(event, data) {
+	                /*$.ajax({
+	                    type: "Post",
+	                    url: "/Bootstrap/GetExpandJson?id=" + data.id,
+	                    dataType: "json",
+	                    success: function (result) {
+	                        for (var index = 0; index < result.length; index++) {
+	                            var item = result[index];
+	                            $("#tree1")
+	                                .treeview("addNode",
+	                                [
+	                                    data.nodeId,
+	                                    { node: { text: item.text, id: item.id }, silent: true }
+	                                ]);
+	                        }
+	                    }
+	                });*/
+	            }
+	    });
+    }
+	
+    initTree();
 
     $("#treeOKBtn").on("click", function(e){
         $("#tree").treeview("deleteNode", [currentLayerData.nodeId, { silent: true }]);
@@ -672,47 +642,314 @@ $(function () {
         treeData[0].nodes = treeData[0].nodes.filter(function(item){
         	return item.nodeId !== currentLayerData.nodeId;
         });
+        var layers = $('#layer0').getLayers();
+        var i=layers.length-1;
+        while(i>=0){
+		// for(var i=(layers.length-1); i>=0;){
+			var item = layers[i];
+		    if(item.type === 'text'){
+		    	if(item.data.id === currentLayerData.id || item.data.roomID === currentLayerData.id || item.data.areaID === currentLayerData.id){
+					if(layers[i-1].type !== 'line'){
+			        	layers.splice(i-1,2);//根据右上角的文字删除
+			        	i = i - 2;
+			        	// break;
+			        }else{
+			        	const cur = AllLinePoints.find((v) => {
+			        		return v.id === currentLayerData.id;
+			        	});
+			        	const length = cur.path.length;
+			        	layers.splice(i-length+1,length);
+			        	i = i - length;
+			        	// break;
+			        }
+		    	}else{
+		    		i--;
+		    	}
+		    }else if(item.type === 'image'){
+		    	break;
+		    }else{
+		    	i--;
+		    }
+		}
+
         //通过节点ID长度来判断删除的节点是room/area/point
         switch(currentLayerData.id.length) {
 			case 2:
 		        rooms = rooms.filter(function(item){
 					return item.id !== currentLayerData.id;
 		        });
+		        roomPaths = roomPaths.filter(function(item){
+					return item.id !== currentLayerData.id;
+		        });
 		        areas = areas.filter(function(item){
 					return item.roomID !== currentLayerData.id;
 		        });
 		        points = points.filter(function(item){
 					return item.roomID !== currentLayerData.id;
 		        });
-			break;
-			case 3:
+		        AllLinePoints = AllLinePoints.filter(function(item){
+					return item.id !== currentLayerData.id;
+		        });
+				break;
+			/*case 3:
 		        areas = areas.filter(function(item){
 					return item.id !== currentLayerData.id;
 		        });
 		        points = points.filter(function(item){
 					return item.areaID !== currentLayerData.id;
 		        });
-			break;
-			case 4:
+			break;*/
+			case 3:
 				points = points.filter(function(item){
 					return item.id !== currentLayerData.id;
 		        });
-			break;
+		        const pid = currentLayerData.id;
+		        const rid = pid.substr(0,2);
+		        let __room = (AllLinePoints.find(function(item){
+					return item.id === rid;
+		        })) || (roomPaths.find(function(item){
+						return item.id === rid;
+			        }));
+		        __room.points = __room.points.filter(v => {
+	        		return v.id !== pid
+	        	});
+				break;
 			default:
 				break;
 		}
 		refreshLocalStorage();
-        var layers = $('#layer0').getLayers();
-		for(var i=layers.length-1;i>=0;i=i-2){
-			var item = layers[i];
-		    if(item.type === 'text' && (item.data.id === currentLayerData.id || item.data.roomID === currentLayerData.id || item.data.areaID === currentLayerData.id)){
-		        layers.splice(i-1,2);//根据右上角的文字删除
-		    }
-		}
-
 		$('#layer0').drawLayers();
     });
     $("#treeCloseBtn").on("click", function(e){
         $('#treeModal').modal('hide');
     });
+
+    function restartPaint() {
+    	var mapid = $("#mapSelect option:selected").attr("value");
+        const mapWidth = MAPS.find(v => {
+        	return v.url === mapid;
+        }).width;
+        $('#layer0').addLayer({
+		  type: 'image',
+		  source: 'img/'+ mapid,
+		  width: Math.round(mapWidth/800 * 634),
+		  height:634,
+		  x: 436, y: 317
+		});
+		$('#layer0').drawLayers();
+    }
+
+    function clear() {
+    	$('#layer0').removeLayers();
+    	restartPaint();
+    	rooms= [];
+    	points = [];
+    	roomPaths= [];
+    	pointPaths = [];
+    	linePaths = [];
+    	AllLinePoints = [];
+    	$("input:radio").prop("checked",false);
+    	$("#room").prop("checked",true);
+    	pen = parseInt($("#room").val());
+		penColor = penColors[pen];
+		modalInnerHtml = templates[pen];
+		modalTitle = modalTitles[pen];
+		$(".draw-modal-body").html(modalInnerHtml);
+		$("#myModalLabel").text(modalTitle);
+		bindCanvasEvent();
+    	treeData[0].nodes = [];
+    	$('#tree').treeview('remove');
+    	initTree();
+    }
+
+    function save() {
+    	var mapid = $("#mapSelect option:selected").attr("value");
+        const map = MAPS.find(v => {
+        	return v.url === mapid;
+        });
+        map.rooms = [...roomPaths, ...AllLinePoints];
+        $.post("/set_floor_data", {'floor_data': JSON.stringify(map)}, function(data){
+			if(data.success){
+				alert('Saved successfully');
+				clear();
+	        	filterRoomOptions(map);
+			}
+		},"json");
+    }
+    $("#save").on("click", function(e){
+    	if(AllLinePoints.length === 0 && roomPaths.length ===0){
+    		alert('No data');
+    		return;
+    	}
+        save();
+    });
+    $("#clear").on("click", function(){
+		clear();
+    });
+
+    function getRoomOptions() {
+		$.get("/get_enabled_location3s",function(data,status){
+		    var roomOpts = _.sortBy(data.list).map(v => `<option>${v}</option>`).join("");
+		    $(".pop-select").empty();
+		    $(".pop-select").append(roomOpts);
+		});
+    }
+    function getPointOptions(room) {
+		$.get("/get_enabled_locationIds?l3_name="+room,function(data,status){
+		    var pointOpts = data.list.map(v => `<option>${v}</option>`).join("");
+		    $(".pop-select").empty();
+		    $(".pop-select").append(pointOpts);
+		});
+    }
+    function filterRoomOptions(map){
+    	map.rooms.forEach(room => {
+    		let param = {"usable": "","unusable": room.name};
+    		$.post("/set_used_location3", param, function(data){
+				console.log(data);
+			},"json");
+    	});
+    }
+
+    function getSelectedMapData(map){
+    	$.post("/get_floor_data", {"floor_id": map}, function(data){
+			if(data.success){
+				let rtRooms = data.list.rooms;
+				$('#layer0').removeLayers();
+				$('#layer0').addLayer({
+				  type: 'image',
+				  source: 'img/'+ data.list.url,
+				  width: Math.round(data.list.width/800 * 634),
+				  height:634,
+				  x: 436, y: 317
+				});
+				layerNumber = 0;
+				rtRooms.forEach((v, i, a) => {
+					var newRoomNode = {
+		    			id: v.id,
+		    			text: v.text || v.name,
+		    			start: v.path.length > 5 ? v.path[v.path.length - 2] : v.path[0],
+		    			end: v.path.length > 5 ? v.path[v.path.length - 1] : v.path[2]
+		    		}
+		    		treeData[0].nodes.push(newRoomNode);
+		    		$("#tree").treeview("addNode", [0, { node: newRoomNode }]);
+		    		if(v.path.length > 5){
+		    			let _paths = [], _points = [];
+		    			_paths = v.path.map((pth) => {
+		    				return new Point(pth.x, pth.y);
+		    			});
+		    			_points = v.points.map((pt) => {
+		    				return {
+		    					id: pt.id,
+		    					text: pt.text,
+		    					position:new Point(pt.position.x, pt.position.y)
+		    				};
+		    			});
+		    			AllLinePoints.push({
+		    				id: v.id,
+			    			text: v.name,
+			    			path: _paths,
+			    			points: _points
+		    			});
+		    			for(var index = 0; index < v.path.length -1 ; index++){
+			    			layerNumber++;
+							layerName = 'layer' + layerNumber;
+		    				$('#layer0').addLayer({
+							  type: 'line',
+							  groups: ['lineGroup'+ (i + 1)],
+							  strokeStyle: 'orange',
+							  strokeWidth: 2,
+							  // fillStyle: '#fff',
+							  name:layerName,
+							  x1: v.path[index].x,
+							  y1: v.path[index].y,
+							  x2: v.path[index+1].x,
+							  y2: v.path[index+1].y
+							});
+		    			}
+		    		}else{
+			    		layerNumber++;
+						layerName = 'layer' + layerNumber;
+			    		$('#layer0').addLayer({
+						  type: 'rectangle',
+						  strokeStyle: 'red',
+						  strokeWidth: 2,
+						  // fillStyle: '#fff',
+						  name:layerName,
+						  fromCenter: false,
+						  x: v.path[0].x,
+						  y: v.path[0].y,
+						  width: v.path[2].x - v.path[0].x,
+						  height: v.path[2].y - v.path[0].y
+						});
+						rooms.push({
+			    			id: v.id,
+			    			text: v.name,
+			    			start: {'x': v.path[0].x, 'y': v.path[0].y},
+			    			end: {'x': v.path[2].x, 'y': v.path[2].y}
+			    		});
+			    		let _pathArray = v.path.map(n => {
+			    			return new Point(n.x, n.y);
+			    		})
+			    		roomPaths.push({'id': v.id, 'name': v.name, 'path': _pathArray, 'points': v.points.map(m => {
+			    			return {
+			    				id: m.id,
+			    				text: m.text,
+			    				position: new Point(m.position.x, m.position.y)
+		    				};
+			    		})});
+		    		}
+		    		$('#layer0').addLayer({
+					  type: 'text',
+					  fillStyle: '#9cf',
+					  strokeStyle: '#25a',
+					  strokeWidth: 1,
+					  x: v.path[1].x - 25, y: v.path[1].y + 10,
+					  fontSize: 14,
+					  fontFamily: 'Verdana, sans-serif',
+					  text: v.name,
+					  data: {
+					  	id: v.id
+					  }
+					});
+		    		v.points.forEach((p) => {
+		    			var newPointNode = {
+			    			id: p.id,
+			    			text: p.text,
+			    			start: {'x': p.position.x, 'y': p.position.y},
+			    			end: {'x': 0, 'y': 0}
+			    		}
+			    		var nodes = treeData[0].nodes;
+			    		var roomNode = nodes.filter(function(node){
+			    			return node.id === v.id;
+			    		})[0];
+		    			$("#tree").treeview("addNode", [parseInt(roomNode.nodeId), { node: newPointNode }]);
+		    			$('#layer0').addLayer({
+				          type: 'arc',
+						  fillStyle: '#69f',
+						  strokeStyle: '#000',
+						  strokeWidth: 1,
+				          x: p.position.x,
+				          y: p.position.y,
+						  radius: 10
+				      	});
+				      	$('#layer0').addLayer({
+						  type: 'text',
+						  fillStyle: '#9cf',
+						  strokeStyle: '#25a',
+						  strokeWidth: 1,
+						  x: p.position.x, y: p.position.y - 17,
+						  fontSize: 14,
+						  fontFamily: 'Verdana, sans-serif',
+						  text: p.text,
+						  data: {
+						  	id: p.id,
+						  	roomID: v.id
+						  }
+						});
+		    		});
+					$('#layer0').drawLayers();
+				});
+			}
+		},"json");
+    }
 });

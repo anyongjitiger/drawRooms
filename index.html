@@ -8,6 +8,25 @@
 	<link href="./bootstrap/css/bootstrap-datepicker.min.css" rel="stylesheet" media="screen">
 	<style type="text/css">
 		html,body{ margin:0; padding:0;} 
+		ul {
+			list-style-type:none;
+			padding-inline-start: 10px;
+		}
+		table, .table>tbody>tr>th {
+			border-top: 0;
+		}
+		.panel-default>.panel-heading {
+		    color: #333;
+		    background-color: #fff;
+		    border-color: #ddd;
+		}
+		.panel-heading {
+		    padding: 10px 15px;
+		    border-bottom: 0;
+		    color:black;
+		    font-size: 1.25em;
+		    font-weight: bold;
+		}
 		.banner{
 			height: 120px;
 			text-align: center;
@@ -20,12 +39,11 @@
 			overflow: auto;
 		}
 		#drawCanvas{
-			position:absolute;
 			border:0;
-			z-index: 19;
+			z-index: 8;
 		}
 		#heatmap{
-			background-image: url("./img/5px.png");
+			margin: auto;
 			background-size: 100% 100%;
 			background-repeat: no-repeat;
 		}
@@ -36,17 +54,27 @@
 			z-index: 99;
 		}
 		.img-list {
-			display: flex;
-			justify-content:center;
+			width: 896px;
+			height:160px;
+			/*display: flex;
+			flex-wrap: nowrap;
+			justify-content:center;*/
+			overflow: hidden;
 			position: relative;
 			text-align: center;
-			/*top: -200px;*/
+			top: 20px;
+			left:510px;
 		}
+
+		.img-list ul{position:absolute;height:166px;}
+		.img-list ul li{float:left;padding:5px;height:156px;width:220px;}
+
 		.img-list img{
 			cursor: pointer;
 		}
 		.img-list > div{
-			width: 250px;
+			display: inline-block;
+			width: 220px;
 		}
 		.rep-img-list {
 			display: flex;
@@ -58,12 +86,22 @@
 		.rep-img-list > div {
 			width:200px;
 		}
-		.sm-img {
-			margin-left: 10px;
-			width: 75%;
+		.rep-img-list li {
+			float: left;
+			margin-left: 2rem;
+			cursor: pointer;
 		}
-		.bg-img {
-			width: 80%;
+		.sm-img-div {
+			width: 220px;
+			height: 140px;
+			background-image: url('./img/110-HM1-1043.png');
+			background-position: center;
+			background-size: 75% auto;
+			background-repeat: no-repeat;
+			cursor: pointer;
+		}
+		.sm-img-div > div {
+			position: relative;top: 136px
 		}
 		.btn-default {
 			border: 1px solid #B8CCF9;
@@ -89,34 +127,30 @@
 		}
 		.right{
 			float: right;
-			margin-right: 10px;
+			margin-right: 5px;
 		}
-		#hover-pop{
+		#room-hover-pop{
 			position: absolute;
 			left:0;
 			top:500px;
-			z-index: 20;
+			width:500px;
+			z-index: 9;
 			visibility:hidden;
 		}
-		#click-pop{
+		#point-hover-pop{
+			position: absolute;
+			left:0;
+			top:500px;
+			width:500px;
+			z-index: 9;
+			visibility:hidden;
+		}
+		#click-pop-details{
+			min-height: 500px;
 			position: absolute;
 			left:500px;
-			top:200px;
-			z-index: 21;
-			visibility:hidden;
-		}
-		#hover-pop2{
-			position: absolute;
-			left:700px;
-			top:200px;
-			z-index: 21;
-			visibility:hidden;
-		}
-		#hover-popf{
-			position: absolute;
-			left:700px;
-			top:200px;
-			z-index: 121;
+			top:160px;
+			z-index: 9;
 			visibility:hidden;
 		}
 		#close-icon{
@@ -124,25 +158,12 @@
 			visibility:hidden;
 			float: right;
 		}
-		#popup-div{
-			position: absolute;
-			left:470px;
-			top:200px;
-			width: 1000px;
-			height: 600px;
-			z-index: 21;
-			visibility:hidden;
-			background-color: rgba(192,192,192,0.8);
-		}
-		#popup-div > div{
-			margin: auto;
-			text-align: center;
-		}
 		.slider-vertical {
+			margin-top: 1rem;
 			margin-left: 1rem;
 		}
 		.right-icons{
-			position: absolute;left: 1435px;top:100px;
+			position: absolute;left: 1465px;top:80px;
 		}
 		.switch-button {
 			width:80px;
@@ -153,14 +174,25 @@
 			cursor: pointer;
 		}
 		#p1s-button {
-			top:33px;
-			right:27px;
+			top:10px;
+			right:20px;
 		}
 		.switch-button-1 {
 			background: url("./img/switch1.png") no-repeat;
 		}
 		.switch-button-2 {
 			background: url("./img/switch2.png") no-repeat;
+		}
+		#clickPopTable {
+			margin: 20px;
+			width: 90%;
+		}
+		.slider.slider-vertical {
+		    height: 110px;
+		    width: 10px;
+		}
+		#sample-types label {
+			font-weight: 400;
 		}
 		@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {  
 		   /* IE10+ specific styles go here */  
@@ -170,11 +202,8 @@
 			.ie-left{
 				margin-left: 570px; 
 			}
-			#click-pop{
+			#click-pop-details{
 				left: 550px;
-			}
-			#popup-div{
-				left: 520px;
 			}
 		}
 	</style>
@@ -189,37 +218,42 @@
 					<span class="caret"></span>
 				</button>
 				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-					<li><a href="#">Aurangabad</a></li>
+					<li><a href="#">Sanford</a></li>
 				</ul>
 			</div>
+			
 			<div class="dropdown inline-btn left">
-				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+				<!-- <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 					Building
 					<span class="caret"></span>
 				</button>
-				<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+				<ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
 					<li><a href="#">AUP_STER</a></li>
 					<li><a href="#">AUP_MICRO</a></li>
-				</ul>
+				</ul> -->
+				<select id='mapSelect' class="form-control">
+				</select>
 			</div>
-			<div class="btn-group inline-btn" style="margin-left: 100px;">
+			
+			<div class="btn-group inline-btn" style="margin-left: 50px;">
 				<button type="button" class="btn btn-bigger btn-primary" id="map-btn">Map</button>
 				<button type="button" class="btn btn-bigger" id="report-btn">Report</button>
 			</div>
-			<div class="inline-btn right">
+			<div class="inline-btn right" >
 				<div class="input-append date">
-				    <input class="datepicker" size="16" type="text" value="" readonly placeholder="To">
+				    <input class="datepicker" size="16" type="text" id="dateTo"  value="" readonly placeholder="To">
 				    <span class="glyphicon glyphicon-th"></span>
 				</div>
 			</div>
 			<div class="inline-btn right">
 				<div class="input-append date">
-				    <input class="datepicker" size="16" type="text" value="" readonly placeholder="From">
+				    <input class="datepicker" size="16" type="text" id="dateFrom" value="" readonly placeholder="From">
 				    <span class="glyphicon glyphicon-th"></span>
 				</div>
 			</div>
+
 			<div class="dropdown inline-btn right">
-				<button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+				<!-- <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 					Month
 					<span class="caret"></span>
 				</button>
@@ -228,59 +262,171 @@
 					<li><a href="#">Quarter</a></li>
 					<li><a href="#">Year</a></li>
 					<li><a href="#">Specified</a></li>
-				</ul>
+				</ul> -->
+				<select id='timeTypeSelect' class="form-control">
+					<option value="Month">Month</option>
+					<option value="Quarter">Quarter</option>
+					<option value="Year">Year</option>
+					<option value="Specified">Specified</option>
+				</select>
 			</div>
 		</div>
 	</div>
 	<div class="ie-left wrap" id="map">
 		<div style="position: absolute;left: 485px;top:93px;">
 			<b>Site:</b>
-			<span>Aurangabad</span>&nbsp;&nbsp;&nbsp;&nbsp;
+			<span>Sanford</span>&nbsp;&nbsp;&nbsp;&nbsp;
 			<b>Building:</b>
-			<span>AUP_STER</span>
+			<span id='building-name'>110-HM1-1043</span>
 		</div>
-		<canvas id="drawCanvas" width="950" height="634" style="top:120px"></canvas>
-		<img id="hover-pop" src="./img/01.png">
-		<!-- <img id="click-pop" src="./img/03.png"> -->
-		<div id="click-pop">
+		<div style="position:absolute;width: 950px;z-index: 8;">
+			<canvas id="drawCanvas" width="872" height="634" style="display:block;top:120px;margin:auto"></canvas>
+		</div>
+		
+		<div id="room-hover-pop">
+			<div class="panel panel-default">
+			  <div class="panel-heading">Panel heading</div>
+			  <div style="max-height: 200px;overflow-y: auto;">
+				  <table class="table" id="roomHoverTable">
+				  	<tr>
+				  		<th>
+				  			Location
+				  		</th>
+				  		<th>
+				  			Total
+				  		</th>
+				  		<th>
+				  			Alert
+				  		</th>
+				  		<th>
+				  			Action
+				  		</th>
+				  	</tr>
+				  	<tr>
+				  		<td>lsdf</td>
+				  		<td>20</td>
+				  		<td>2</td>
+				  		<td>5</td>
+				  	</tr>
+				  </table>
+				</div>
+			</div>
+		</div>
+		<div id="point-hover-pop">
+			<div class="panel panel-default">
+			  <div class="panel-heading">Panel heading</div>
+			  <table class="table" id="pointHoverTable">
+			  	<tr>
+			  		<th>
+			  			Sample Type
+			  		</th>
+			  		<th>
+			  			Total
+			  		</th>
+			  		<th>
+			  			Alert
+			  		</th>
+			  		<th>
+			  			Action
+			  		</th>
+			  	</tr>
+			  	<tr>
+			  		<td>lsdf</td>
+			  		<td>20</td>
+			  		<td>2</td>
+			  		<td>5</td>
+			  	</tr>
+			  </table>
+			</div>
+		</div>
+		<div id="click-pop-details">
+			<img id="close-icon" src="./img/close.png">
 			<div id="p1s-button" class="switch-button switch-button-1">
 			</div>
-			<img id ="ppimg1" src="./img/03.png">
+			<div class="panel panel-default" style="min-height: 500px;min-width: 920px">
+				<div class="panel-heading" style="padding-left: 25px">Panel heading</div>
+				<div id="chart" style="width: 800px;height:400px;display: none"></div>
+			  	<div style="max-height: 500px;overflow-y: auto;">
+					<table class="table" id="clickPopTable">
+					  	<tr>
+					  		<th>
+					  			Sample Date
+					  		</th>
+					  		<th>
+					  			Sample Type
+					  		</th>
+					  		<th>
+					  			Alert
+					  		</th>
+					  		<th>
+					  			Action
+					  		</th>
+					  		<th>
+					  			Total
+					  		</th>
+					  	</tr>
+					  	<tr>
+					  		<td>lsdf</td>
+					  		<td>20</td>
+					  		<td>5</td>
+					  		<td>lsdf</td>
+					  		<td>5</td>
+					  	</tr>
+					</table>
+			  	</div>
+			</div>
 		</div>
-
-		<img id="hover-pop2" src="./img/02.png">
-		<img id="hover-popf" src="./img/02.png">
-		<div id="popup-div">
-			<div class="btn-group inline-btn">
-				<button type="button" class="btn btn-bigger btn-primary" id="big-area-btn">Map</button>
-				<button type="button" class="btn btn-bigger" id="dashboard-btn">Dashboard</button>
-			</div>
-			<img  id="close-icon" src="./img/close.png">
-			<div id="click-pop1" style="display: none;">
-				<div id="p2s-button" class="switch-button switch-button-1">
-				</div>
-				<img id ="ppimg2" src="./img/03.png">
-			</div>
-			<div id="click-pop21" style="margin-top: 30px;">
-				<p style="text-align: center;font-size: 16px">Room 306 A</p>
-				<div style="height: 400px;width: 600px;margin: auto" id="pop-heatmap"></div>
-			</div>
-		</div>
-		<div style="height: 634px;width: 950px;margin: auto" id="heatmap"></div>
+		<div style="height: 634px;width: 872px;background-image: url('./img/110-HM1-1043.png');" id="heatmap"></div>
 		<div class="right-icons">
-			<label for="name">Sample Type</label>
-			<div class="checkbox">
-			    <label><input type="checkbox" value="">Surface(Contact)</label>
-			</div>
-			<div class="checkbox">
-			    <label><input type="checkbox" value="">Surface(Swabs)</label>
-			</div>
-			<div class="checkbox">
-			    <label><input type="checkbox" value="">Active Air</label>
-			</div>
-			<div class="checkbox">
-			    <label><input type="checkbox" value="">Setting/Passive Air</label>
-			</div>
+			<h5 style="font-weight: 700">Sample Type</h5>
+			<ul id="sample-types">
+			  <li>
+			    <input type="checkbox" name="surface" id="surface">
+			    <label for="surface">Surface</label>
+			    <ul>
+			      <li>
+			        <input type="checkbox" name="surface-viable" id="surface-viable">
+			        <label for="surface-viable">Surface Viable</label>
+			      </li>
+			      <li>
+			        <input type="checkbox" name="drain-surface" id="drain-surface">
+			        <label for="drain-surface">Drain Surface</label>
+			      </li>
+			      <li>
+			        <input type="checkbox" name="shower-surface" id="shower-surface">
+			        <label for="shower-surface">Shower Surface</label>
+			      </li>
+			      <li>
+			        <input type="checkbox" name="floor-viable" id="floor-viable">
+			        <label for="floor-viable">Floor Viable</label>
+			      </li>
+			    </ul>
+			  </li>
+			  <li>
+			    <input type="checkbox" name="active-air" id="active-air">
+			    <label for="active-air">Active Air</label>
+		      </li>
+			  <li>
+			    <input type="checkbox" name="non-viable" id="non-viable">
+			    <label for="non-viable">Non-Viable (Particulate)</label>
+
+			    <ul>
+			      <li>
+			        <input type="checkbox" name="non-viable-05" id="non-viable-05">
+			        <label for="non-viable-05">0.5</label>
+			      </li>
+			      <li>
+			        <input type="checkbox" name="non-viable-5" id="non-viable-5">
+			        <label for="non-viable-5">5</label>
+			      </li>
+			    </ul>
+			  </li>
+			  <li>
+			    <input type="checkbox" name="settle-plates" id="settle-plates">
+			    <label for="settle-plates">Settle Plates, Passive air sample</label>
+		      </li>
+			</ul>
+
 			<label for="name">Level Filter</label>
 			<div class="checkbox">
 			    <label><input type="checkbox" value="">Alert</label>
@@ -291,36 +437,74 @@
 			<div class="checkbox">
 			    <label><input type="checkbox" value="">Mold</label>
 			</div>
-			<img src="./img/right.jpg"><br>
+			<!-- <img src="./img/right.jpg"><br> -->
+			<form id="changeMax">
+				<label>Min</label>
+				<input type="number" name="alertMin" value="0" min="0" max="100">
+				<label>Max</label>
+				<input type="number" name="alertMax" value="5" min="0" max="100">
+				<input type="submit" value="OK">
+			</form>
 			<input id="ex4" type="text" data-slider-min="1" data-slider-max="5" data-slider-step="0.5" data-slider-value="1" data-slider-orientation="vertical"/>
 		</div>
 	</div>
 	<div class="wrap" id="report" style="display: none">
-		<div style="height: 634px;width: 950px;">
-			<img src="./img/04.png" style="width: 100%">
+		<div style="height: 534px;width: 950px;">
+			<!-- <img src="./img/04.png" style="width: 100%"> -->
+			<div id="groupChart" style="height: 634px;width: 950px;"></div>
+		</div>
+	</div>
+	<div style="width: 525px;height:142px;bottom:18px;position: absolute;background-color: white;z-index: 9">
+		<div style="width:20px;margin-top:50px;float: right;margin-right: 2rem">
+			<img src="./img/br_prev.png" style="cursor: pointer;" id="mapPrev">
 		</div>
 	</div>
 	<div class="img-list" id="mapList">
-		<div style="width:20px;margin-top:50px"><img src="./img/01_03.png"></div>
-		<div><img class="sm-img" src="./img/01_1.png"><div>Jan</div></div>
-		<div><img class="sm-img" src="./img/01_2.png"><div>Feb</div></div>
-		<div><img class="sm-img" src="./img/01_1.png"><div>Mar</div></div>
-		<div><img class="sm-img" src="./img/01_2.png"><div>Apr</div></div>
+		<ul>
+			<li><div class="sm-img-div"><div>Jan</div></div></li>
+			<li><div class="sm-img-div"><div>Feb</div></div></li>
+			<li><div class="sm-img-div"><div>Mar</div></div></li>
+			<li><div class="sm-img-div"><div>Apr</div></div></li>
+			<li><div class="sm-img-div"><div>May</div></div></li>
+			<li><div class="sm-img-div"><div>Jun</div></div></li>
+			<li><div class="sm-img-div"><div>Jul</div></div></li>
+			<li><div class="sm-img-div"><div>Aug</div></div></li>
+			<li><div class="sm-img-div"><div>Sep</div></div></li>
+			<li><div class="sm-img-div"><div>Oct</div></div></li>
+			<li><div class="sm-img-div"><div>Nov</div></div></li>
+			<li><div class="sm-img-div"><div>Dec</div></div></li>
+			<li><div class="sm-img-div"><div></div></div></li>
+		</ul>
+	</div>
+	<div style="width: 480px;height:140px;bottom:18px;left:1405px;position: absolute;background-color: white;z-index: 2">
+		<div style="width:20px;margin-top:50px;float: left;margin-left: 2rem">
+			<img src="./img/br_next.png" style="cursor: pointer;" id="mapNext">
+		</div>
 	</div>
 	<div class="rep-img-list" id="reportList" style="display: none">
-		<div style="width:20px;margin-top:25px"><img src="./img/01_03.png"></div>
-		<div><img class="sm-img" src="./img/05.png"></div>
-		<div><img class="sm-img" src="./img/05.png"></div>
-		<div><img class="sm-img" src="./img/05.png"></div>
-		<div><img class="sm-img" src="./img/05.png"></div>
-		<div><img class="sm-img" src="./img/05.png"></div>
-		<div><img class="sm-img" src="./img/05.png"></div>
+		<ul>
+			<li><a>Jan</a></li>
+			<li><a>Feb</a></li>
+			<li><a>Mar</a></li>
+			<li><a>Apr</a></li>
+			<li><a>May</a></li>
+			<li><a>Jun</a></li>
+			<li><a>Jul</a></li>
+			<li><a>Aug</a></li>
+			<li><a>Sep</a></li>
+			<li><a>Oct</a></li>
+			<li><a>Nov</a></li>
+			<li><a>Dec</a></li>
+		</ul>
 	</div>
-	<script type="text/javascript" src="./js/jquery-2.1.4.min.js"></script>
+	<script type="text/javascript" src="./lib/jquery-2.1.4.min.js"></script>
+	<script type="text/javascript" src="./lib/echarts.min.js"></script>
+	<script type="text/javascript" src="./lib/dayjs.min.js"></script>
+	<script type="text/javascript" src="./lib/lodash.min.js"></script>
 	<script type="text/javascript" src="./bootstrap/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="./bootstrap/js/bootstrap-slider.min.js"></script>
 	<script type="text/javascript" src="./bootstrap/js/bootstrap-datepicker.min.js" charset="UTF-8"></script>
-	<script type="text/javascript" src="./js/heatmap.min.js"></script>
+	<script type="text/javascript" src="./lib/heatmap.min.js"></script>
 	<script type="text/javascript" src="./js/demo.js"></script>
 </body>
 </html>
