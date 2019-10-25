@@ -1,106 +1,19 @@
 $(function () {
+	const MAPS = [{'floor_id': '110-HM1-1043', 'url': '110-HM1-1043.png', 'width': 1100, 'height': 800},
+		{'floor_id': '110-HM1-1044', 'url': '110-HM1-1044.png', 'width': 1100, 'height': 800},
+		{'floor_id': '110-HM1-1053', 'url': '110-HM1-1053.png', 'width': 1100, 'height': 800}, 
+		{'floor_id': '110-HM1-1054', 'url': '110-HM1-1054.png', 'width': 1100, 'height': 800}, 
+		{'floor_id': '110-HM1-3046', 'url': '110-HM1-3046.png', 'width': 1100, 'height': 800},
+		{'floor_id': '110-HM1-3047', 'url': '110-HM1-3047.png', 'width': 1100, 'height': 800},
+		{'floor_id': '110-HM1-3048', 'url': '110-HM1-3048.png', 'width': 1100, 'height': 800},
+		{'floor_id': '110-HM1-3051', 'url': '110-HM1-3051.png', 'width': 1100, 'height': 800},
+		{'floor_id': '110-HM1-3057', 'url': '110-HM1-3057.png', 'width': 1100, 'height': 800}
+	];
 	var pen = 0;
 	var penColors = ['red', 'blue', 'green', 'orange'];
 	var penColor = penColors[pen];
-	getRoomOptions();
-	var roomTemplate = $("#roomSelector").html();
-	var areaTemplate = $("#areaSelector").html();
-	var pointTemplate = $("#pointSelector").html();
-	var modalTitles = ['Select Room','Select Area','Select Point' ];
-	var templates = [roomTemplate, areaTemplate, pointTemplate, roomTemplate];
-	var modalInnerHtml = templates[pen];
-	var modalTitle = modalTitles[pen];
-	var roomCount = 0, areaCount = 0, pointCount = 0;
-	$(".draw-modal-body").html(modalInnerHtml);
-    $("input[type='radio']").on("click",function(){
-    	$("input[type='radio']").prop("checked",false);
-    	let radioName = $(this).attr("name");
-    	// $(this).attr("checked",true);
-    	$(`input[name='${radioName}']`).prop("checked",true);
-		pen = parseInt($(this).val());
-		penColor = penColors[pen];
-		modalInnerHtml = templates[pen];
-		modalTitle = modalTitles[pen];
-		$(".draw-modal-body").html(modalInnerHtml);
-		$("#myModalLabel").text(modalTitle);
-		bindCanvasEvent();
-	});
-	const MAPS = [{'floor_id': '110-HM1-1043', 'url': '110-HM1-1043.png', 'width': 1100, 'height': 800},
-	{'floor_id': '110-HM1-1044', 'url': '110-HM1-1044.png', 'width': 1100, 'height': 800},
-	{'floor_id': '110-HM1-1053', 'url': '110-HM1-1053.png', 'width': 1100, 'height': 800}, 
-	{'floor_id': '110-HM1-1054', 'url': '110-HM1-1054.png', 'width': 1100, 'height': 800}, 
-	{'floor_id': '110-HM1-3046', 'url': '110-HM1-3046.png', 'width': 1100, 'height': 800},
-	{'floor_id': '110-HM1-3047', 'url': '110-HM1-3047.png', 'width': 1100, 'height': 800},
-	{'floor_id': '110-HM1-3048', 'url': '110-HM1-3048.png', 'width': 1100, 'height': 800},
-	{'floor_id': '110-HM1-3051', 'url': '110-HM1-3051.png', 'width': 1100, 'height': 800},
-	{'floor_id': '110-HM1-3057', 'url': '110-HM1-3057.png', 'width': 1100, 'height': 800}
-	];
-	var curMap = '110-HM1-1043.png';
-	for(var i = 0; i < MAPS.length; i++) {
-		//添加option元素
-		$("#mapSelect").append("<option value='" + MAPS[i].url + "'>" + MAPS[i].floor_id + "</option>");
-	}
-	curMap = $("#mapSelect").val();
-	getSelectedMapData('110-HM1-1043');
-    $("#mapSelect").change(function (data) {
-    	if(!(AllLinePoints.length === 0 && roomPaths.length ===0)){
-    		$("#mapSelect").val(curMap);
-    		alert('Please save first!');
-    		return;
-    	}
-    	curMap = $("#mapSelect").val();
-    	var text = $("#mapSelect").find("option:selected").text();
-    	getSelectedMapData(text);
-        clear();
-    });
-
-
-    // var domCanvas = document.getElementById('layer0');
-    var domCanvas = $('#layer0')[0];
-    $('#layer0').addLayer({
-	  type: 'image',
-	  source: 'img/110-HM1-1043.png',
-	  width:872,
-	  height:634,
-	  x: 436, y: 317
-	});
-	$('#layer0').drawLayers();
-	// var domContext = domCanvas.getContext('2d');
-	// domContext.fillRect(50,50,150,50);
-
-	// var balls = [];
     var rooms= [], areas = [], points = [];
     var roomPaths= [], areaPaths = [], pointPaths = [], linePaths = [];
-
-    /**
-     * 事件交互, 点击事件为例
-     * isPointInPath(横坐标, 纵坐标)
-     */
- //    for(var i = 0; i < 10; i++){
- //        var ball = {
- //            X: Math.random()*domCanvas.width,
- //            Y: Math.random()*domCanvas.height,
- //            R: Math.random()*50 + 20
- //        }
- //        balls[i] = ball;
- //    }
- //    draw();
-	// $("#layer0").click(function(){
- //        //标准的获取鼠标点击相对于canvas画布的坐标公式
- //        var x = event.pageX - domCanvas.getBoundingClientRect().left;
- //        var y = event.pageY - domCanvas.getBoundingClientRect().top;
- //        var context = createNewCanvas();
- //        /*for(var i = 0; i < balls.length; i++){
- //            domContext.beginPath();
- //            domContext.arc(balls[i].X, balls[i].Y, balls[i].R, 0, Math.PI*2);
- //            if(domContext.isPointInPath(x, y)){
- //                domContext.fillStyle = "red";
- //                domContext.fill();
- //            }
- //        }*/
-
- //    });
-	
 	var layerNumber = 0;
 	var layerName = 'layer' + layerNumber;
 	var startX = 0;
@@ -113,8 +26,58 @@ $(function () {
 	var lineCurrPoint = null;
 	var AllLinePoints = [];
 	var drawingLinePoints = [];
-	var copyDomCanvas = domCanvas;
+    var currentLayerData;
+
+	getRoomOptions();
+	var roomTemplate = $("#roomSelector").html();
+	var areaTemplate = $("#areaSelector").html();
+	var pointTemplate = $("#pointSelector").html();
+	var modalTitles = ['Select Room','Select Area','Select Point' ];
+	var templates = [roomTemplate, areaTemplate, pointTemplate, roomTemplate];
+	var modalInnerHtml = templates[pen];
+	var modalTitle = modalTitles[pen];
+	$(".draw-modal-body").html(modalInnerHtml);
+
+	var curMap = '110-HM1-1043.png';
+	for(var i = 0; i < MAPS.length; i++) {
+		$("#mapSelect").append("<option value='" + MAPS[i].url + "'>" + MAPS[i].floor_id + "</option>");
+	}
+	curMap = $("#mapSelect").val();
+	getSelectedMapData('110-HM1-1043');
+
+    var domCanvas = $('#layer0')[0];
+    $('#layer0').addLayer({
+	  type: 'image',
+	  source: 'img/110-HM1-1043.png',
+	  width:872,
+	  height:634,
+	  x: 436, y: 317
+	});
+	$('#layer0').drawLayers();
+
+    var treeData = [{
+    	text: "rooms",
+        id: '1',
+        state: {
+		    expanded: true
+		},
+        nodes: [
+            /*{
+                text: "room1",
+                id: '11',
+                nodes: [
+                    {
+                        text: 'area1',
+                        id: '111'
+                    }
+                ]
+            }*/
+        ]
+    }];
+    initTree();
 	bindCanvasEvent();
+
+//----------------------------------------------------Functions----------------------------------------------------
 	function bindCanvasEvent(){
 		if(pen === 0 || pen === 1){
 			$("#layer0").unbind();
@@ -377,6 +340,278 @@ $(function () {
 		});
 	}
 
+    function initTree() {
+    	$("#tree").treeview({
+	        data: treeData,
+	        showIcon: false,
+	        showCheckbox: false,
+	        onhoverColor: "#E8E8E8",
+	        showBorder: false,
+	        showTags: true,
+	        highlightSelected: true,
+	        highlightSearchResults: false,
+	        selectedBackColor: "#8D9CAA",
+	        levels: 2,
+	        onNodeSelected: function(event, data) {
+	            if (data.nodeId === undefined || data.nodeId === null) {
+	                return;
+	            }
+	            currentLayerData = data;
+	            $('#treeModal').modal({  
+				  keyboard: false  
+				});
+	        }
+	    });
+    }
+
+    function restartPaint() {
+    	var mapid = $("#mapSelect option:selected").attr("value");
+        const mapWidth = MAPS.find(v => {
+        	return v.url === mapid;
+        }).width;
+        $('#layer0').addLayer({
+		  type: 'image',
+		  source: 'img/'+ mapid,
+		  width: Math.round(mapWidth/800 * 634),
+		  height:634,
+		  x: 436, y: 317
+		});
+		$('#layer0').drawLayers();
+    }
+
+    function clear() {
+    	$('#layer0').removeLayers();
+    	restartPaint();
+    	rooms= [];
+    	points = [];
+    	roomPaths= [];
+    	pointPaths = [];
+    	linePaths = [];
+    	AllLinePoints = [];
+    	$("input:radio").prop("checked",false);
+    	$("#room").prop("checked",true);
+    	pen = parseInt($("#room").val());
+		penColor = penColors[pen];
+		modalInnerHtml = templates[pen];
+		modalTitle = modalTitles[pen];
+		$(".draw-modal-body").html(modalInnerHtml);
+		$("#myModalLabel").text(modalTitle);
+		bindCanvasEvent();
+    	treeData[0].nodes = [];
+    	$('#tree').treeview('remove');
+    	initTree();
+    }
+
+    function save() {
+    	var mapid = $("#mapSelect option:selected").attr("value");
+        const map = MAPS.find(v => {
+        	return v.url === mapid;
+        });
+        map.rooms = [...roomPaths, ...AllLinePoints];
+        $.post("/set_floor_data", {'floor_data': JSON.stringify(map)}, function(data){
+			if(data.success){
+				alert('Saved successfully');
+				clear();
+	        	filterRoomOptions(map);
+			}
+		},"json");
+    }
+
+    function getRoomOptions() {
+		$.get("/get_enabled_location3s",function(data,status){
+		    var roomOpts = _.sortBy(data.list).map(v => `<option>${v}</option>`).join("");
+		    $(".pop-select").empty();
+		    $(".pop-select").append(roomOpts);
+		});
+    }
+
+    function getPointOptions(room) {
+		$.get("/get_enabled_locationIds?l3_name="+room,function(data,status){
+		    var pointOpts = data.list.map(v => `<option>${v}</option>`).join("");
+		    $(".pop-select").empty();
+		    $(".pop-select").append(pointOpts);
+		});
+    }
+
+    function filterRoomOptions(map){
+    	map.rooms.forEach(room => {
+    		let param = {"usable": "","unusable": room.name};
+    		$.post("/set_used_location3", param, function(data){
+				console.log(data);
+			},"json");
+    	});
+    }
+
+    function getSelectedMapData(map){
+    	$.post("/get_floor_data", {"floor_id": map}, function(data){
+			if(data.success){
+				let rtRooms = data.list.rooms;
+				$('#layer0').removeLayers();
+				$('#layer0').addLayer({
+				  type: 'image',
+				  source: 'img/'+ data.list.url,
+				  width: Math.round(data.list.width/800 * 634),
+				  height:634,
+				  x: 436, y: 317
+				});
+				layerNumber = 0;
+				rtRooms.forEach((v, i, a) => {
+					var newRoomNode = {
+		    			id: v.id,
+		    			text: v.text || v.name,
+		    			start: v.path.length > 5 ? v.path[v.path.length - 2] : v.path[0],
+		    			end: v.path.length > 5 ? v.path[v.path.length - 1] : v.path[2]
+		    		}
+		    		treeData[0].nodes.push(newRoomNode);
+		    		$("#tree").treeview("addNode", [0, { node: newRoomNode }]);
+		    		if(v.path.length > 5){
+		    			let _paths = [], _points = [];
+		    			_paths = v.path.map((pth) => {
+		    				return new Point(pth.x, pth.y);
+		    			});
+		    			_points = v.points.map((pt) => {
+		    				return {
+		    					id: pt.id,
+		    					text: pt.text,
+		    					position:new Point(pt.position.x, pt.position.y)
+		    				};
+		    			});
+		    			AllLinePoints.push({
+		    				id: v.id,
+			    			text: v.name,
+			    			path: _paths,
+			    			points: _points
+		    			});
+		    			for(var index = 0; index < v.path.length -1 ; index++){
+			    			layerNumber++;
+							layerName = 'layer' + layerNumber;
+		    				$('#layer0').addLayer({
+							  type: 'line',
+							  groups: ['lineGroup'+ (i + 1)],
+							  strokeStyle: 'orange',
+							  strokeWidth: 2,
+							  // fillStyle: '#fff',
+							  name:layerName,
+							  x1: v.path[index].x,
+							  y1: v.path[index].y,
+							  x2: v.path[index+1].x,
+							  y2: v.path[index+1].y
+							});
+		    			}
+		    		}else{
+			    		layerNumber++;
+						layerName = 'layer' + layerNumber;
+			    		$('#layer0').addLayer({
+						  type: 'rectangle',
+						  strokeStyle: 'red',
+						  strokeWidth: 2,
+						  // fillStyle: '#fff',
+						  name:layerName,
+						  fromCenter: false,
+						  x: v.path[0].x,
+						  y: v.path[0].y,
+						  width: v.path[2].x - v.path[0].x,
+						  height: v.path[2].y - v.path[0].y
+						});
+						rooms.push({
+			    			id: v.id,
+			    			text: v.name,
+			    			start: {'x': v.path[0].x, 'y': v.path[0].y},
+			    			end: {'x': v.path[2].x, 'y': v.path[2].y}
+			    		});
+			    		let _pathArray = v.path.map(n => {
+			    			return new Point(n.x, n.y);
+			    		})
+			    		roomPaths.push({'id': v.id, 'name': v.name, 'path': _pathArray, 'points': v.points.map(m => {
+			    			return {
+			    				id: m.id,
+			    				text: m.text,
+			    				position: new Point(m.position.x, m.position.y)
+		    				};
+			    		})});
+		    		}
+		    		$('#layer0').addLayer({
+					  type: 'text',
+					  fillStyle: '#9cf',
+					  strokeStyle: '#25a',
+					  strokeWidth: 1,
+					  x: v.path[1].x - 25, y: v.path[1].y + 10,
+					  fontSize: 14,
+					  fontFamily: 'Verdana, sans-serif',
+					  text: v.name,
+					  data: {
+					  	id: v.id
+					  }
+					});
+		    		v.points.forEach((p) => {
+		    			var newPointNode = {
+			    			id: p.id,
+			    			text: p.text,
+			    			start: {'x': p.position.x, 'y': p.position.y},
+			    			end: {'x': 0, 'y': 0}
+			    		}
+			    		var nodes = treeData[0].nodes;
+			    		var roomNode = nodes.filter(function(node){
+			    			return node.id === v.id;
+			    		})[0];
+		    			$("#tree").treeview("addNode", [parseInt(roomNode.nodeId), { node: newPointNode }]);
+		    			$('#layer0').addLayer({
+				          type: 'arc',
+						  fillStyle: '#69f',
+						  strokeStyle: '#000',
+						  strokeWidth: 1,
+				          x: p.position.x,
+				          y: p.position.y,
+						  radius: 10
+				      	});
+				      	$('#layer0').addLayer({
+						  type: 'text',
+						  fillStyle: '#9cf',
+						  strokeStyle: '#25a',
+						  strokeWidth: 1,
+						  x: p.position.x, y: p.position.y - 17,
+						  fontSize: 14,
+						  fontFamily: 'Verdana, sans-serif',
+						  text: p.text,
+						  data: {
+						  	id: p.id,
+						  	roomID: v.id
+						  }
+						});
+		    		});
+					$('#layer0').drawLayers();
+				});
+			}
+		},"json");
+    }
+//----------------------------------------------------Event listeners----------------------------------------------------
+    
+    $("input[type='radio']").on("click",function(){
+    	$("input[type='radio']").prop("checked",false);
+    	let radioName = $(this).attr("name");
+    	// $(this).attr("checked",true);
+    	$(`input[name='${radioName}']`).prop("checked",true);
+		pen = parseInt($(this).val());
+		penColor = penColors[pen];
+		modalInnerHtml = templates[pen];
+		modalTitle = modalTitles[pen];
+		$(".draw-modal-body").html(modalInnerHtml);
+		$("#myModalLabel").text(modalTitle);
+		bindCanvasEvent();
+	});
+
+    $("#mapSelect").change(function (data) {
+    	if(!(AllLinePoints.length === 0 && roomPaths.length ===0)){
+    		$("#mapSelect").val(curMap);
+    		alert('Please save first!');
+    		return;
+    	}
+    	curMap = $("#mapSelect").val();
+    	var text = $("#mapSelect").find("option:selected").text();
+    	getSelectedMapData(text);
+        clear();
+    });
+
     $("#drawOKBtn").on("click", function(e){
     	var v = $(".pop-select").val();
     	var nodes = treeData[0].nodes;
@@ -392,7 +627,6 @@ $(function () {
     		textY = startY+10;
     	}
     	if(pen === 0 || pen === 3){
-    		roomCount++;
     		var lastRoomID = nodes.length === 0 ? '10' : _.orderBy(nodes, ['id'], ['desc'])[0].id;
     		newRoomID = (parseInt(lastRoomID)+1).toString();
     		var newRoomNode = {
@@ -551,90 +785,6 @@ $(function () {
     	$('#layer0').drawLayers();
     	$('#myModal').modal('hide');
     });
-    /*function draw(){
-        domContext.fillStyle = "blue";
-        for(var i = 0; i < balls.length; i++){
-            domContext.beginPath();
-            domContext.arc(balls[i].X, balls[i].Y, balls[i].R, 0, Math.PI*2);
-            domContext.fill();
-        }
-    }
-
-    function createNewCanvas() {
-    	var canvas = document.createElement('canvas');
-		var ctx = canvas.getContext('2d');
-		return ctx;
-    }*/
-
-    var treeData = [{
-    	text: "rooms",
-        id: '1',
-        state: {
-		    expanded: true
-		},
-        nodes: [
-            /*{
-                text: "room1",
-                id: '11',
-                nodes: [
-                    {
-                        text: 'area1',
-                        id: '111'
-                    }
-                ]
-            }*/
-        ]
-    }];
-    function getTreeData() {
-    	return treeData;
-    }
-    var currentLayerData;
-    function initTree() {
-    	$("#tree").treeview({
-	        data: getTreeData(),
-	        showIcon: false,
-	        showCheckbox: false,
-	        onhoverColor: "#E8E8E8",
-	        showBorder: false,
-	        showTags: true,
-	        highlightSelected: true,
-	        highlightSearchResults: false,
-	        selectedBackColor: "#8D9CAA",
-	        levels: 2,
-	        onNodeSelected: function(event, data) {
-	            if (data.nodeId === undefined || data.nodeId === null) {
-	                return;
-	            }
-	            currentLayerData = data;
-	            $('#treeModal').modal({  
-				  keyboard: false  
-				});
-	            // $("#tree").treeview("deleteNode", [data.nodeId, { silent: true }]);
-	            //nodeData是checkedNode或者selectedNode，选中或者checked这个节点， 该节点如果有父节点的话就会被删除。
-	        },
-	        onNodeExpanded:
-	            function(event, data) {
-	                /*$.ajax({
-	                    type: "Post",
-	                    url: "/Bootstrap/GetExpandJson?id=" + data.id,
-	                    dataType: "json",
-	                    success: function (result) {
-	                        for (var index = 0; index < result.length; index++) {
-	                            var item = result[index];
-	                            $("#tree1")
-	                                .treeview("addNode",
-	                                [
-	                                    data.nodeId,
-	                                    { node: { text: item.text, id: item.id }, silent: true }
-	                                ]);
-	                        }
-	                    }
-	                });*/
-	            }
-	    });
-    }
-	
-    initTree();
 
     $("#treeOKBtn").on("click", function(e){
         $("#tree").treeview("deleteNode", [currentLayerData.nodeId, { silent: true }]);
@@ -720,62 +870,11 @@ $(function () {
 		refreshLocalStorage();
 		$('#layer0').drawLayers();
     });
+
     $("#treeCloseBtn").on("click", function(e){
         $('#treeModal').modal('hide');
     });
 
-    function restartPaint() {
-    	var mapid = $("#mapSelect option:selected").attr("value");
-        const mapWidth = MAPS.find(v => {
-        	return v.url === mapid;
-        }).width;
-        $('#layer0').addLayer({
-		  type: 'image',
-		  source: 'img/'+ mapid,
-		  width: Math.round(mapWidth/800 * 634),
-		  height:634,
-		  x: 436, y: 317
-		});
-		$('#layer0').drawLayers();
-    }
-
-    function clear() {
-    	$('#layer0').removeLayers();
-    	restartPaint();
-    	rooms= [];
-    	points = [];
-    	roomPaths= [];
-    	pointPaths = [];
-    	linePaths = [];
-    	AllLinePoints = [];
-    	$("input:radio").prop("checked",false);
-    	$("#room").prop("checked",true);
-    	pen = parseInt($("#room").val());
-		penColor = penColors[pen];
-		modalInnerHtml = templates[pen];
-		modalTitle = modalTitles[pen];
-		$(".draw-modal-body").html(modalInnerHtml);
-		$("#myModalLabel").text(modalTitle);
-		bindCanvasEvent();
-    	treeData[0].nodes = [];
-    	$('#tree').treeview('remove');
-    	initTree();
-    }
-
-    function save() {
-    	var mapid = $("#mapSelect option:selected").attr("value");
-        const map = MAPS.find(v => {
-        	return v.url === mapid;
-        });
-        map.rooms = [...roomPaths, ...AllLinePoints];
-        $.post("/set_floor_data", {'floor_data': JSON.stringify(map)}, function(data){
-			if(data.success){
-				alert('Saved successfully');
-				clear();
-	        	filterRoomOptions(map);
-			}
-		},"json");
-    }
     $("#save").on("click", function(e){
     	if(AllLinePoints.length === 0 && roomPaths.length ===0){
     		alert('No data');
@@ -783,173 +882,8 @@ $(function () {
     	}
         save();
     });
+
     $("#clear").on("click", function(){
 		clear();
     });
-
-    function getRoomOptions() {
-		$.get("/get_enabled_location3s",function(data,status){
-		    var roomOpts = _.sortBy(data.list).map(v => `<option>${v}</option>`).join("");
-		    $(".pop-select").empty();
-		    $(".pop-select").append(roomOpts);
-		});
-    }
-    function getPointOptions(room) {
-		$.get("/get_enabled_locationIds?l3_name="+room,function(data,status){
-		    var pointOpts = data.list.map(v => `<option>${v}</option>`).join("");
-		    $(".pop-select").empty();
-		    $(".pop-select").append(pointOpts);
-		});
-    }
-    function filterRoomOptions(map){
-    	map.rooms.forEach(room => {
-    		let param = {"usable": "","unusable": room.name};
-    		$.post("/set_used_location3", param, function(data){
-				console.log(data);
-			},"json");
-    	});
-    }
-
-    function getSelectedMapData(map){
-    	$.post("/get_floor_data", {"floor_id": map}, function(data){
-			if(data.success){
-				let rtRooms = data.list.rooms;
-				$('#layer0').removeLayers();
-				$('#layer0').addLayer({
-				  type: 'image',
-				  source: 'img/'+ data.list.url,
-				  width: Math.round(data.list.width/800 * 634),
-				  height:634,
-				  x: 436, y: 317
-				});
-				layerNumber = 0;
-				rtRooms.forEach((v, i, a) => {
-					var newRoomNode = {
-		    			id: v.id,
-		    			text: v.text || v.name,
-		    			start: v.path.length > 5 ? v.path[v.path.length - 2] : v.path[0],
-		    			end: v.path.length > 5 ? v.path[v.path.length - 1] : v.path[2]
-		    		}
-		    		treeData[0].nodes.push(newRoomNode);
-		    		$("#tree").treeview("addNode", [0, { node: newRoomNode }]);
-		    		if(v.path.length > 5){
-		    			let _paths = [], _points = [];
-		    			_paths = v.path.map((pth) => {
-		    				return new Point(pth.x, pth.y);
-		    			});
-		    			_points = v.points.map((pt) => {
-		    				return {
-		    					id: pt.id,
-		    					text: pt.text,
-		    					position:new Point(pt.position.x, pt.position.y)
-		    				};
-		    			});
-		    			AllLinePoints.push({
-		    				id: v.id,
-			    			text: v.name,
-			    			path: _paths,
-			    			points: _points
-		    			});
-		    			for(var index = 0; index < v.path.length -1 ; index++){
-			    			layerNumber++;
-							layerName = 'layer' + layerNumber;
-		    				$('#layer0').addLayer({
-							  type: 'line',
-							  groups: ['lineGroup'+ (i + 1)],
-							  strokeStyle: 'orange',
-							  strokeWidth: 2,
-							  // fillStyle: '#fff',
-							  name:layerName,
-							  x1: v.path[index].x,
-							  y1: v.path[index].y,
-							  x2: v.path[index+1].x,
-							  y2: v.path[index+1].y
-							});
-		    			}
-		    		}else{
-			    		layerNumber++;
-						layerName = 'layer' + layerNumber;
-			    		$('#layer0').addLayer({
-						  type: 'rectangle',
-						  strokeStyle: 'red',
-						  strokeWidth: 2,
-						  // fillStyle: '#fff',
-						  name:layerName,
-						  fromCenter: false,
-						  x: v.path[0].x,
-						  y: v.path[0].y,
-						  width: v.path[2].x - v.path[0].x,
-						  height: v.path[2].y - v.path[0].y
-						});
-						rooms.push({
-			    			id: v.id,
-			    			text: v.name,
-			    			start: {'x': v.path[0].x, 'y': v.path[0].y},
-			    			end: {'x': v.path[2].x, 'y': v.path[2].y}
-			    		});
-			    		let _pathArray = v.path.map(n => {
-			    			return new Point(n.x, n.y);
-			    		})
-			    		roomPaths.push({'id': v.id, 'name': v.name, 'path': _pathArray, 'points': v.points.map(m => {
-			    			return {
-			    				id: m.id,
-			    				text: m.text,
-			    				position: new Point(m.position.x, m.position.y)
-		    				};
-			    		})});
-		    		}
-		    		$('#layer0').addLayer({
-					  type: 'text',
-					  fillStyle: '#9cf',
-					  strokeStyle: '#25a',
-					  strokeWidth: 1,
-					  x: v.path[1].x - 25, y: v.path[1].y + 10,
-					  fontSize: 14,
-					  fontFamily: 'Verdana, sans-serif',
-					  text: v.name,
-					  data: {
-					  	id: v.id
-					  }
-					});
-		    		v.points.forEach((p) => {
-		    			var newPointNode = {
-			    			id: p.id,
-			    			text: p.text,
-			    			start: {'x': p.position.x, 'y': p.position.y},
-			    			end: {'x': 0, 'y': 0}
-			    		}
-			    		var nodes = treeData[0].nodes;
-			    		var roomNode = nodes.filter(function(node){
-			    			return node.id === v.id;
-			    		})[0];
-		    			$("#tree").treeview("addNode", [parseInt(roomNode.nodeId), { node: newPointNode }]);
-		    			$('#layer0').addLayer({
-				          type: 'arc',
-						  fillStyle: '#69f',
-						  strokeStyle: '#000',
-						  strokeWidth: 1,
-				          x: p.position.x,
-				          y: p.position.y,
-						  radius: 10
-				      	});
-				      	$('#layer0').addLayer({
-						  type: 'text',
-						  fillStyle: '#9cf',
-						  strokeStyle: '#25a',
-						  strokeWidth: 1,
-						  x: p.position.x, y: p.position.y - 17,
-						  fontSize: 14,
-						  fontFamily: 'Verdana, sans-serif',
-						  text: p.text,
-						  data: {
-						  	id: p.id,
-						  	roomID: v.id
-						  }
-						});
-		    		});
-					$('#layer0').drawLayers();
-				});
-			}
-		},"json");
-    }
 });
